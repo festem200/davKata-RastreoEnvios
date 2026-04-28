@@ -66,6 +66,44 @@ Capas principales del backend:
 - `application`: casos de uso.
 - `infrastructure`: adaptadores HTTP y repositorios.
 
+## Base de datos local
+
+La base de datos local usa PostgreSQL con Docker Compose.
+
+Levantar PostgreSQL:
+
+```bash
+docker compose up -d postgres
+```
+
+Validar que el contenedor este corriendo:
+
+```bash
+docker compose ps
+```
+
+Datos de conexion local:
+
+```text
+host: localhost
+port: 5432
+database: dav_kata_rastreo_envios
+user: postgres
+password: postgres
+```
+
+El script de inicializacion se encuentra en:
+
+```text
+insumos/init-db.sql
+```
+
+Detener PostgreSQL:
+
+```bash
+docker compose down
+```
+
 ## Ejecutar en desarrollo
 
 Usar la version de Node definida para el proyecto:
