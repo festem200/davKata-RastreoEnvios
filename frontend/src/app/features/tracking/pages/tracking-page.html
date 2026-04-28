@@ -1,0 +1,61 @@
+<section class="tracking-page">
+  <header class="tracking-page__header">
+    <p>Rastreo de envios</p>
+    <h1>Consulta el estado de una guia</h1>
+  </header>
+
+  <form class="tracking-page__form" (ngSubmit)="search()">
+    <label for="trackingNumber">Numero de guia</label>
+    <div>
+      <input
+        id="trackingNumber"
+        name="trackingNumber"
+        type="text"
+        [ngModel]="trackingNumber()"
+        (ngModelChange)="trackingNumber.set($event)"
+      />
+      <button type="submit" [disabled]="isLoading()">
+        {{ isLoading() ? 'Consultando...' : 'Consultar' }}
+      </button>
+    </div>
+  </form>
+
+  @if (errorMessage()) {
+    <p class="tracking-page__error">{{ errorMessage() }}</p>
+  }
+
+  @if (shipment(); as shipmentData) {
+    <article class="shipment">
+      <div>
+        <span>Estado</span>
+        <strong>{{ shipmentData.status }}</strong>
+      </div>
+      <div>
+        <span>Guia</span>
+        <strong>{{ shipmentData.trackingNumber }}</strong>
+      </div>
+      <div>
+        <span>Origen</span>
+        <strong>{{ shipmentData.origin }}</strong>
+      </div>
+      <div>
+        <span>Destino</span>
+        <strong>{{ shipmentData.destination }}</strong>
+      </div>
+      <div>
+        <span>Entrega estimada</span>
+        <strong>{{ shipmentData.estimatedDelivery }}</strong>
+      </div>
+    </article>
+
+    <section class="timeline" aria-label="Eventos del envio">
+      @for (event of shipmentData.events; track event.occurredAt) {
+        <article>
+          <time>{{ event.occurredAt | date: 'medium' }}</time>
+          <strong>{{ event.location }}</strong>
+          <p>{{ event.description }}</p>
+        </article>
+      }
+    </section>
+  }
+</section>
