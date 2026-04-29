@@ -1,7 +1,6 @@
 import type { Request, Response } from 'express';
 import { z } from 'zod';
-
-import { TrackShipmentUseCase } from '../../../application/use-cases/track-shipment.use-case.js';
+import { TrackShipmentUseCase } from '../../application/use-cases/track-shipment.use-case.js';
 
 const trackingParamsSchema = z.object({
   trackingNumber: z.string().min(1)

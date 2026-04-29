@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { ShipmentStatus } from '../../domain/enums/shipment-status.enum.js';
 import type { ShipmentRepository } from '../../domain/ports/shipment-repository.js';
 import { TrackShipmentUseCase } from './track-shipment.use-case.js';
 
@@ -11,9 +12,8 @@ describe('TrackShipmentUseCase', () => {
         recipient: 'Cliente Demo',
         origin: 'Bogota',
         destination: 'Medellin',
-        status: 'IN_TRANSIT',
-        estimatedDelivery: '2026-05-02',
-        events: []
+        status: ShipmentStatus.ACTIVA,
+        estimatedDelivery: '2026-05-02'
       })
     };
 

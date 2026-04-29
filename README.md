@@ -68,7 +68,16 @@ Capas principales del backend:
 
 ## Base de datos local
 
-La base de datos local usa PostgreSQL con Docker Compose.
+La base de datos local usa PostgreSQL con Docker Compose y Prisma como ORM.
+
+Crear los archivos de entorno:
+
+```bash
+cp .env.example .env
+cp backend/.env.example backend/.env
+```
+
+Las credenciales y `DATABASE_URL` se configuran en esos archivos `.env`, no en el codigo.
 
 Levantar PostgreSQL:
 
@@ -88,8 +97,7 @@ Datos de conexion local:
 host: localhost
 port: 5432
 database: dav_kata_rastreo_envios
-user: postgres
-password: postgres
+user/password: ver .env y backend/.env
 ```
 
 El script de inicializacion se encuentra en:
@@ -97,6 +105,16 @@ El script de inicializacion se encuentra en:
 ```text
 insumos/init-db.sql
 ```
+
+Comandos Prisma:
+
+```bash
+npm --workspace backend run prisma:generate
+npm --workspace backend run prisma:push
+npm --workspace backend run db:seed
+```
+
+Usar `prisma:push` si la base ya existia y necesita sincronizar las tablas del schema.
 
 Detener PostgreSQL:
 

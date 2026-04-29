@@ -1,15 +1,4 @@
-export type ShipmentStatus =
-  | 'CREATED'
-  | 'IN_TRANSIT'
-  | 'OUT_FOR_DELIVERY'
-  | 'DELIVERED'
-  | 'EXCEPTION';
-
-export interface ShipmentEvent {
-  occurredAt: string;
-  location: string;
-  description: string;
-}
+import { ShipmentStatus } from '../enums/shipment-status.enum.js';
 
 export interface Shipment {
   trackingNumber: string;
@@ -18,5 +7,4 @@ export interface Shipment {
   destination: string;
   status: ShipmentStatus;
   estimatedDelivery: string;
-  events: ShipmentEvent[];
 }
