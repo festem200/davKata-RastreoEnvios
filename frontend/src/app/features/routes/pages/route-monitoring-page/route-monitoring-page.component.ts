@@ -307,7 +307,7 @@ export class RouteMonitoringPageComponent {
                   of({
                     route,
                     tracking: null,
-                    errorMessage: 'Tracking no disponible',
+                  errorMessage: 'Seguimiento no disponible',
                   }),
                 ),
               ),

@@ -2,7 +2,7 @@
   <header class="monitoring-header">
     <div>
       <p>Monitoreo en tiempo real</p>
-      <h1>Tracking de rutas activas</h1>
+      <h1>Seguimiento de rutas activas</h1>
     </div>
 
     <div class="monitoring-header__meta">
@@ -32,7 +32,7 @@
       <p>Cuando existan rutas con estado ACTIVE, ACTIVA o EN_TRANSITO se mostraran aqui.</p>
     </section>
   } @else {
-    <section class="table-card" aria-label="Tracking de rutas activas">
+    <section class="table-card" aria-label="Seguimiento de rutas activas">
       <div class="table-card__header">
         <div>
           <h2>Listado de monitoreo</h2>
@@ -71,7 +71,7 @@
         </label>
 
         <label>
-          Tracking
+          Seguimiento
           <select formControlName="trackingStatus">
             <option value="TODOS">Todos</option>
             <option value="DISPONIBLE">Disponible</option>
@@ -124,7 +124,7 @@
                 </th>
                 <th>
                   <button type="button" class="sort-button" (click)="sortBy('trackingStatus')">
-                    Estado tracking {{ sortLabel('trackingStatus') }}
+                    Estado seguimiento {{ sortLabel('trackingStatus') }}
                   </button>
                 </th>
               </tr>
