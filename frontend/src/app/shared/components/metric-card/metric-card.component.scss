@@ -1,0 +1,23 @@
+.metric-card {
+  border: 1px solid #c4dfe5;
+  border-radius: 8px;
+  background: #f8fcfd;
+  padding: 20px;
+
+  span {
+    display: block;
+    color: #53676e;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+
+  strong {
+    color: #14242a;
+    font-size: 30px;
+  }
+}
+
+.metric-card--warning {
+  border-color: #e4cbbb;
+  background: #fff8f3;
+}

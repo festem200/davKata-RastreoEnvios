@@ -1,0 +1,21 @@
+<section class="app-shell">
+  <aside class="sidebar" aria-label="Menu principal">
+    <div class="profile">
+      <div class="avatar">{{ user?.name?.charAt(0) ?? 'U' }}</div>
+      <strong>{{ user?.name ?? 'Usuario' }}</strong>
+      <span>{{ user?.email }}</span>
+    </div>
+
+    <nav>
+      <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
+      <a routerLink="/routes" routerLinkActive="active">Rutas</a>
+      <a routerLink="/route-monitoring" routerLinkActive="active">Monitoreo</a>
+    </nav>
+
+    <button type="button" (click)="logout()">Cerrar sesion</button>
+  </aside>
+
+  <main>
+    <ng-content />
+  </main>
+</section>
