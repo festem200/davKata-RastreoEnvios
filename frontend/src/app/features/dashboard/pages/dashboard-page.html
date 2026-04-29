@@ -1,0 +1,48 @@
+<section class="dashboard-shell">
+  <aside class="sidebar" aria-label="Menu principal">
+    <div class="profile">
+      <div class="avatar">{{ user?.name?.charAt(0) ?? 'U' }}</div>
+      <strong>{{ user?.name ?? 'Usuario' }}</strong>
+      <span>{{ user?.email }}</span>
+    </div>
+
+    <nav>
+      <a class="active">Dashboard</a>
+      <a>Envios</a>
+      <a>Rutas</a>
+      <a>Reportes</a>
+      <a>Configuracion</a>
+    </nav>
+
+    <button type="button" (click)="logout()">Cerrar sesion</button>
+  </aside>
+
+  <main>
+    <header>
+      <div>
+        <p>Panel privado</p>
+        <h1>Bienvenido, {{ user?.name ?? 'usuario' }}</h1>
+      </div>
+      <span>{{ user?.role }}</span>
+    </header>
+
+    <section class="summary" aria-label="Resumen">
+      <article>
+        <span>Total envios</span>
+        <strong>5483</strong>
+      </article>
+      <article>
+        <span>Ordenes activas</span>
+        <strong>2859</strong>
+      </article>
+      <article>
+        <span>En transito</span>
+        <strong>1248</strong>
+      </article>
+      <article class="warning">
+        <span>Incidencias</span>
+        <strong>38</strong>
+      </article>
+    </section>
+  </main>
+</section>
