@@ -1,0 +1,153 @@
+.heatmap-card {
+  border: 1px solid #c4dfe5;
+  border-radius: 8px;
+  background: #f8fcfd;
+  padding: 22px;
+}
+
+header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+
+  h2 {
+    margin: 0;
+    color: #14242a;
+    font-size: 20px;
+  }
+
+  p {
+    margin: 6px 0 0;
+    color: #657b82;
+    font-weight: 700;
+  }
+
+  span {
+    color: #174d5f;
+    font-weight: 900;
+    white-space: nowrap;
+  }
+}
+
+.heatmap-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.heatmap-cell {
+  display: grid;
+  gap: 12px;
+  min-height: 132px;
+  border: 1px solid #d7e8ec;
+  border-radius: 8px;
+  background: #eef5f7;
+  color: #174d5f;
+  padding: 16px;
+
+  span {
+    font-weight: 900;
+  }
+
+  strong {
+    align-self: end;
+    color: #14242a;
+    font-size: 34px;
+    line-height: 1;
+  }
+}
+
+.heatmap-cell[data-intensity='1'] {
+  background: #dbeff2;
+}
+
+.heatmap-cell[data-intensity='2'] {
+  background: #b8dde4;
+}
+
+.heatmap-cell[data-intensity='3'] {
+  background: #79b6c3;
+}
+
+.heatmap-cell[data-intensity='4'] {
+  background: #174d5f;
+  border-color: #174d5f;
+  color: #eef9fb;
+
+  strong {
+    color: #ffffff;
+  }
+}
+
+.bar {
+  overflow: hidden;
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(20, 36, 42, 0.12);
+
+  span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: currentColor;
+  }
+}
+
+footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+  color: #657b82;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.legend {
+  display: inline-grid;
+  grid-template-columns: repeat(5, 22px);
+  gap: 5px;
+
+  i {
+    width: 22px;
+    height: 10px;
+    border-radius: 999px;
+    background: #eef5f7;
+  }
+
+  i[data-intensity='1'] {
+    background: #dbeff2;
+  }
+
+  i[data-intensity='2'] {
+    background: #b8dde4;
+  }
+
+  i[data-intensity='3'] {
+    background: #79b6c3;
+  }
+
+  i[data-intensity='4'] {
+    background: #174d5f;
+  }
+}
+
+@media (max-width: 980px) {
+  .heatmap-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  header,
+  footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .heatmap-grid {
+    grid-template-columns: 1fr;
+  }
+}

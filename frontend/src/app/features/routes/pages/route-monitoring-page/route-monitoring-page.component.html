@@ -1,0 +1,85 @@
+<app-shell>
+  <header class="monitoring-header">
+    <div>
+      <p>Monitoreo en tiempo real</p>
+      <h1>Tracking de rutas activas</h1>
+    </div>
+
+    <div class="monitoring-header__meta">
+      <span>{{ activeRoutesCount() }} rutas activas</span>
+      @if (lastRefreshAt()) {
+        <small>Actualizado {{ lastRefreshAt() | date: 'shortTime' }}</small>
+      }
+      <button type="button" (click)="retry()" [disabled]="isRefreshing()">
+        {{ isRefreshing() ? 'Actualizando...' : 'Actualizar' }}
+      </button>
+    </div>
+  </header>
+
+  @if (isLoading()) {
+    <section class="monitoring-state" aria-live="polite">
+      <strong>Cargando tracking...</strong>
+      <p>Consultando rutas activas y su posicion actual.</p>
+    </section>
+  } @else if (errorMessage()) {
+    <section class="monitoring-state monitoring-state--error" role="alert">
+      <strong>{{ errorMessage() }}</strong>
+      <button type="button" (click)="retry()">Reintentar</button>
+    </section>
+  } @else if (rows().length === 0) {
+    <section class="monitoring-state" aria-live="polite">
+      <strong>No hay rutas activas.</strong>
+      <p>Cuando existan rutas con estado ACTIVE, ACTIVA o EN_TRANSITO se mostraran aqui.</p>
+    </section>
+  } @else {
+    <section class="monitoring-table" aria-label="Tracking de rutas activas">
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Ruta</th>
+              <th>Ubicacion / coordenadas</th>
+              <th>Progreso</th>
+              <th>ETA</th>
+              <th>Ultima actualizacion</th>
+              <th>Estado tracking</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows(); track row.route.id) {
+              <tr>
+                <td>
+                  <strong>{{ row.route.originCity }} - {{ row.route.destinationCity }}</strong>
+                  <span>{{ row.route.carrier }} - {{ row.route.vehicleType }}</span>
+                </td>
+                @if (row.tracking; as tracking) {
+                  <td>{{ formatCoordinates(tracking) }}</td>
+                  <td>
+                    <div class="progress-cell">
+                      <div
+                        class="progress-bar"
+                        role="progressbar"
+                        [attr.aria-valuenow]="normalizeProgress(tracking.progressPercent)"
+                        aria-valuemin="0"
+                        aria-valuemax="100"
+                      >
+                        <span [style.width.%]="normalizeProgress(tracking.progressPercent)"></span>
+                      </div>
+                      <strong>{{ normalizeProgress(tracking.progressPercent) | number: '1.0-0' }}%</strong>
+                    </div>
+                  </td>
+                  <td>{{ formatEta(tracking.etaMinutes) }}</td>
+                  <td>{{ tracking.timestamp | date: 'medium' }}</td>
+                  <td><span class="tracking-status">Disponible</span></td>
+                } @else {
+                  <td colspan="4" class="tracking-unavailable">{{ row.errorMessage }}</td>
+                  <td><span class="tracking-status tracking-status--error">No disponible</span></td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
+</app-shell>

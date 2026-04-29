@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { forkJoin, map, Observable, of, switchMap } from 'rxjs';
 
 import { ListRoutesResponse, Route, RoutePayload } from '../../../core/models/route.model';
 import { API_URL } from '../../../core/services/api-url';
@@ -14,6 +14,29 @@ export class RoutesService {
     return this.http.get<ListRoutesResponse>(`${this.apiUrl}/routes`, {
       params: { page }
     });
+  }
+
+  listAll(): Observable<Route[]> {
+    return this.list(1).pipe(
+      switchMap((firstPage) => {
+        const totalPages = firstPage.pagination.totalPages;
+
+        if (totalPages <= 1) {
+          return of(firstPage.data);
+        }
+
+        const remainingRequests = Array.from({ length: totalPages - 1 }, (_value, index) =>
+          this.list(index + 2)
+        );
+
+        return forkJoin(remainingRequests).pipe(
+          map((remainingPages) => [
+            ...firstPage.data,
+            ...remainingPages.flatMap((page) => page.data)
+          ])
+        );
+      })
+    );
   }
 
   create(payload: RoutePayload): Observable<Route> {

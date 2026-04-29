@@ -28,6 +28,14 @@ export const routes: Routes = [
       )
   },
   {
+    path: 'route-monitoring',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import(
+        './features/routes/pages/route-monitoring-page/route-monitoring-page.component'
+      ).then((module) => module.RouteMonitoringPageComponent)
+  },
+  {
     path: 'tracking',
     canActivate: [authGuard],
     loadComponent: () =>

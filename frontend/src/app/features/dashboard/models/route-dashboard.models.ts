@@ -9,8 +9,20 @@ export interface StatusTotal {
   color: string;
 }
 
+export interface RegionHeatmapItem {
+  region: string;
+  label: string;
+  activeRoutes: number;
+}
+
 export interface RouteDashboardStats {
   totalRoutes: number;
   statusTotals: StatusTotal[];
   topCostRoutes: Route[];
+  activeRoutesByRegion: RegionHeatmapItem[];
+}
+
+export interface DashboardDateRange {
+  startDate: string | null;
+  endDate: string | null;
 }

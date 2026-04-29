@@ -14,6 +14,42 @@
       <app-metric-card label="Suspendidas" [value]="suspendedRoutes()" tone="warning" />
     </section>
 
+    <section class="date-filter" aria-label="Filtro por rango de fechas">
+      <div>
+        <h2>Rango de analisis</h2>
+        <p>
+          @if (hasDateRangeFilter()) {
+            {{ dateRangeLabel() }}
+          } @else {
+            Mostrando el historico completo de rutas.
+          }
+        </p>
+      </div>
+
+      <form [formGroup]="dateRangeForm" (ngSubmit)="applyDateRange()">
+        <label>
+          Desde
+          <input type="date" formControlName="startDate" />
+        </label>
+
+        <label>
+          Hasta
+          <input type="date" formControlName="endDate" />
+        </label>
+
+        <div class="date-filter__actions">
+          <button type="submit" [disabled]="isLoading()">Aplicar</button>
+          <button type="button" class="ghost-button" [disabled]="isLoading()" (click)="clearDateRange()">
+            Limpiar
+          </button>
+        </div>
+      </form>
+
+      @if (dateRangeError()) {
+        <p class="date-filter__error" role="alert">{{ dateRangeError() }}</p>
+      }
+    </section>
+
     @if (isLoading()) {
       <section class="dashboard-state" aria-live="polite">
         <strong>Cargando indicadores...</strong>
@@ -28,6 +64,11 @@
       <section class="dashboard-grid" aria-label="Indicadores de rutas">
         <app-doughnut-chart title="Total de rutas por estado" [items]="statusTotals()" />
         <app-ranked-routes title="Top 5 rutas con mayor costo" [items]="topCostRoutes()" />
+        <app-route-heatmap
+          class="heatmap-panel"
+          title="Mapa de calor de rutas activas por region"
+          [items]="activeRoutesByRegion()"
+        />
       </section>
     }
 </app-shell>

@@ -36,11 +36,105 @@ header {
   margin-bottom: 22px;
 }
 
+.date-filter {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.8fr) minmax(0, 1.2fr);
+  gap: 18px;
+  align-items: end;
+  border: 1px solid #c4dfe5;
+  border-radius: 8px;
+  background: #f8fcfd;
+  margin-bottom: 22px;
+  padding: 18px;
+
+  h2 {
+    margin: 0;
+    color: #14242a;
+    font-size: 18px;
+  }
+
+  p {
+    margin: 6px 0 0;
+    color: #657b82;
+    font-weight: 700;
+  }
+
+  form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(150px, 1fr)) auto;
+    gap: 12px;
+    align-items: end;
+  }
+
+  label {
+    display: grid;
+    gap: 7px;
+    color: #334a52;
+    font-weight: 800;
+  }
+
+  input {
+    width: 100%;
+    border: 1px solid #b9d0d6;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #14242a;
+    font: inherit;
+    outline: none;
+    padding: 10px 12px;
+
+    &:focus {
+      border-color: #174d5f;
+      box-shadow: 0 0 0 4px rgba(23, 77, 95, 0.14);
+    }
+  }
+}
+
+.date-filter__actions {
+  display: flex;
+  gap: 10px;
+}
+
+button {
+  border: 0;
+  border-radius: 8px;
+  background: #174d5f;
+  color: #ffffff;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+  min-height: 40px;
+  padding: 0 14px;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+.ghost-button {
+  border: 1px solid #bfd8de;
+  background: #ffffff;
+  color: #174d5f;
+}
+
+.date-filter__error {
+  grid-column: 1 / -1;
+  color: #b42318;
+  font-weight: 800;
+  margin: 0;
+}
+
 .dashboard-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(360px, 0.8fr);
   gap: 18px;
   align-items: start;
+}
+
+.heatmap-panel {
+  display: block;
+  grid-column: 1 / -1;
 }
 
 .dashboard-state {
@@ -82,6 +176,11 @@ header {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .date-filter,
+  .date-filter form {
+    grid-template-columns: 1fr;
+  }
+
   .dashboard-grid {
     grid-template-columns: 1fr;
   }
@@ -95,5 +194,9 @@ header {
 
   .summary {
     grid-template-columns: 1fr;
+  }
+
+  .date-filter__actions {
+    flex-direction: column;
   }
 }

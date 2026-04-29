@@ -20,7 +20,7 @@
   @if (errorMessage()) {
     <section class="message message--error" role="alert">
       <strong>{{ errorMessage() }}</strong>
-      <button type="button" (click)="loadRoutes(pagination()?.page ?? 1)">Reintentar</button>
+      <button type="button" (click)="loadRoutes()">Reintentar</button>
     </section>
   }
 
@@ -114,11 +114,54 @@
     <div class="table-card__header">
       <div>
         <h2>Listado</h2>
-        @if (pagination(); as pageInfo) {
-          <p>{{ pageInfo.total }} rutas registradas</p>
-        }
+        <p>{{ pagination().total }} rutas encontradas de {{ allRoutes().length }} registradas</p>
       </div>
     </div>
+
+    <form class="filters" [formGroup]="filterForm">
+      <label>
+        Buscar
+        <input
+          type="search"
+          formControlName="search"
+          placeholder="Origen, destino, transportadora..."
+        />
+      </label>
+
+      <label>
+        Estado
+        <select formControlName="status">
+          <option value="TODOS">Todos</option>
+          @for (status of statuses; track status) {
+            <option [value]="status">{{ status }}</option>
+          }
+        </select>
+      </label>
+
+      <label>
+        Vehiculo
+        <select formControlName="vehicleType">
+          <option value="TODOS">Todos</option>
+          @for (vehicleType of vehicleTypes(); track vehicleType) {
+            <option [value]="vehicleType">{{ vehicleType }}</option>
+          }
+        </select>
+      </label>
+
+      <label>
+        Transportadora
+        <select formControlName="carrier">
+          <option value="TODOS">Todas</option>
+          @for (carrier of carriers(); track carrier) {
+            <option [value]="carrier">{{ carrier }}</option>
+          }
+        </select>
+      </label>
+
+      <div class="filter-actions">
+        <button type="button" class="ghost-button" (click)="resetFilters()">Limpiar</button>
+      </div>
+    </form>
 
     @if (isLoading()) {
       <div class="empty-state">Cargando rutas...</div>
@@ -129,12 +172,36 @@
         <table>
           <thead>
             <tr>
-              <th>Ruta</th>
-              <th>Vehiculo</th>
-              <th>Transportadora</th>
-              <th>Distancia</th>
-              <th>Costo</th>
-              <th>Estado</th>
+              <th>
+                <button type="button" class="sort-button" (click)="sortBy('route')">
+                  Ruta {{ sortLabel('route') }}
+                </button>
+              </th>
+              <th>
+                <button type="button" class="sort-button" (click)="sortBy('vehicleType')">
+                  Vehiculo {{ sortLabel('vehicleType') }}
+                </button>
+              </th>
+              <th>
+                <button type="button" class="sort-button" (click)="sortBy('carrier')">
+                  Transportadora {{ sortLabel('carrier') }}
+                </button>
+              </th>
+              <th>
+                <button type="button" class="sort-button" (click)="sortBy('distanceKm')">
+                  Distancia {{ sortLabel('distanceKm') }}
+                </button>
+              </th>
+              <th>
+                <button type="button" class="sort-button" (click)="sortBy('costUsd')">
+                  Costo {{ sortLabel('costUsd') }}
+                </button>
+              </th>
+              <th>
+                <button type="button" class="sort-button" (click)="sortBy('status')">
+                  Estado {{ sortLabel('status') }}
+                </button>
+              </th>
               @if (isAdmin()) {
                 <th>Acciones</th>
               }
@@ -171,22 +238,30 @@
       </div>
     }
 
-    @if (pagination(); as pageInfo) {
-      <footer>
-        <span>Pagina {{ pageInfo.page }} de {{ pageInfo.totalPages }}</span>
-        <div>
-          <button type="button" [disabled]="pageInfo.page <= 1 || isLoading()" (click)="goToPreviousPage()">
-            Anterior
-          </button>
-          <button
-            type="button"
-            [disabled]="pageInfo.page >= pageInfo.totalPages || isLoading()"
-            (click)="goToNextPage()"
-          >
-            Siguiente
-          </button>
-        </div>
-      </footer>
-    }
+    <footer>
+      <label class="page-size">
+        Por pagina
+        <select [value]="pageSize()" (change)="setPageSize($any($event.target).value)">
+          @for (option of pageSizeOptions; track option) {
+            <option [value]="option">{{ option }}</option>
+          }
+        </select>
+      </label>
+
+      <span>Pagina {{ pagination().page }} de {{ pagination().totalPages }}</span>
+
+      <div>
+        <button type="button" [disabled]="pagination().page <= 1 || isLoading()" (click)="goToPreviousPage()">
+          Anterior
+        </button>
+        <button
+          type="button"
+          [disabled]="pagination().page >= pagination().totalPages || isLoading()"
+          (click)="goToNextPage()"
+        >
+          Siguiente
+        </button>
+      </div>
+    </footer>
   </section>
 </app-shell>
