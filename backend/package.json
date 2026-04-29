@@ -27,6 +27,9 @@
     "fast-xml-parser": "^5.7.2",
     "multer": "^2.1.1",
     "pg": "^8.20.0",
+    "pino": "^10.3.1",
+    "pino-http": "^11.0.0",
+    "uuid": "^14.0.0",
     "zod": "^4.2.1"
   },
   "devDependencies": {

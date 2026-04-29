@@ -182,6 +182,23 @@ URLs locales:
 - Backend: `http://localhost:3000`
 - Salud backend: `http://localhost:3000/health`
 
+### Logs estructurados del backend
+
+El backend emite logs JSON con Pino. Cada request usa el header `x-correlation-id`;
+si el cliente no lo envia, la API genera uno y lo retorna en la respuesta.
+
+Ejemplo de uso dentro de un handler:
+
+```ts
+request.log.info({
+  correlationId: request.correlationId,
+  code: 400,
+  method: 'GET',
+  endpoint: '/api/routes',
+  message: 'SOAP timeout'
+});
+```
+
 Contrato OpenAPI:
 
 ```text
