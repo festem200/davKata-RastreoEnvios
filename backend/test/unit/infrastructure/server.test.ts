@@ -1,6 +1,6 @@
 import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import { afterEach, beforeAll, describe, expect, it } from '@jest/globals';
+import { afterEach, beforeAll, describe, expect, it, jest } from '@jest/globals';
 
 process.env.DATABASE_URL ??= 'postgresql://test:test@localhost:5432/test';
 process.env.JWT_SECRET ??= 'unit-test-secret';
@@ -8,6 +8,14 @@ process.env.CORS_ORIGIN ??= 'http://localhost:4200';
 
 let createServer: typeof import('../../../src/infrastructure/server.js').createServer;
 let server: Server | undefined;
+
+jest.unstable_mockModule('../../../src/infrastructure/repositories/prisma-route.repository.js', () => ({
+  PrismaRouteRepository: class PrismaRouteRepository {}
+}));
+
+jest.unstable_mockModule('../../../src/infrastructure/repositories/prisma-user.repository.js', () => ({
+  PrismaUserRepository: class PrismaUserRepository {}
+}));
 
 const listen = async (): Promise<string> => {
   const app = createServer();

@@ -77,8 +77,8 @@ cp .env.example .env
 cp backend/.env.example backend/.env
 ```
 
-Las credenciales y `DATABASE_URL` se configuran en esos archivos `.env`, no en el codigo.
-El backend tambien requiere `JWT_SECRET` para firmar tokens de autenticacion.
+Las credenciales, URLs, limites operativos y secretos se configuran en esos archivos `.env`, no en el codigo.
+El backend tambien requiere `JWT_SECRET` y `JWT_ACCESS_TOKEN_EXPIRES_IN` para firmar tokens de autenticacion.
 
 Levantar PostgreSQL:
 
@@ -114,9 +114,9 @@ npm --workspace backend run db:setup
 ```
 
 Ese comando genera el cliente Prisma y carga la data inicial.
-La semilla crea el usuario administrador `admin@test.com` con password `123456`
-y el usuario operador `operador@test.com` con password `123456`.
-La password se almacena hasheada con bcrypt usando cost factor `12`.
+La semilla crea el usuario administrador definido por `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD`
+y el usuario operador definido por `SEED_OPERATOR_EMAIL` / `SEED_OPERATOR_PASSWORD`.
+La password se almacena hasheada con bcrypt usando el cost factor `SEED_BCRYPT_COST_FACTOR`.
 
 Comandos Prisma por separado:
 
@@ -199,8 +199,8 @@ Body:
 
 ```json
 {
-  "email": "admin@test.com",
-  "password": "123456"
+  "email": "<SEED_ADMIN_EMAIL>",
+  "password": "<SEED_ADMIN_PASSWORD>"
 }
 ```
 

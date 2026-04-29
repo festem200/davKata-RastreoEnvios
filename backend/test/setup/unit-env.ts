@@ -1,0 +1,11 @@
+process.env.PORT ??= '3000';
+process.env.CORS_ORIGIN ??= 'http://localhost:4200';
+process.env.CSV_UPLOAD_MAX_BYTES ??= '2097152';
+process.env.DATABASE_URL ??= 'postgresql://test:test@localhost:5432/test';
+process.env.JWT_ACCESS_TOKEN_EXPIRES_IN ??= '8h';
+process.env.JWT_SECRET ??= 'unit-test-secret';
+process.env.LOGIN_RATE_LIMIT_MAX_ATTEMPTS ??= '5';
+process.env.LOGIN_RATE_LIMIT_WINDOW_MS ??= '60000';
+process.env.LOG_LEVEL ??= 'silent';
+process.env.TRACKING_CACHE_TTL_MS ??= '60000';
+process.env.TRACKING_SOAP_URL ??= 'http://localhost:8088/mockTrackingBinding';

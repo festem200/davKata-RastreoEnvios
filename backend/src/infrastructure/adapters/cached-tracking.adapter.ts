@@ -11,7 +11,7 @@ export class CachedTrackingAdapter implements TrackingPort {
 
   constructor(
     private readonly trackingPort: TrackingPort,
-    private readonly ttlMs = 60_000,
+    private readonly ttlMs: number,
     private readonly now: () => number = () => Date.now()
   ) {}
 

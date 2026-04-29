@@ -36,7 +36,7 @@ export const createRoutesRouter = (): Router => {
       callback(null, true);
     },
     limits: {
-      fileSize: 2 * 1024 * 1024,
+      fileSize: env.csvUploadMaxBytes,
       files: 1,
       fields: 0,
       parts: 1
@@ -44,7 +44,10 @@ export const createRoutesRouter = (): Router => {
     storage: multer.memoryStorage()
   });
   const routeRepository = new PrismaRouteRepository();
-  const trackingAdapter = new CachedTrackingAdapter(new SoapTrackingAdapter(env.trackingSoapUrl));
+  const trackingAdapter = new CachedTrackingAdapter(
+    new SoapTrackingAdapter(env.trackingSoapUrl),
+    env.trackingCacheTtlMs
+  );
   const listRoutesUseCase = new ListRoutesUseCase(routeRepository);
   const getRouteUseCase = new GetRouteUseCase(routeRepository);
   const createRouteUseCase = new CreateRouteUseCase(routeRepository);

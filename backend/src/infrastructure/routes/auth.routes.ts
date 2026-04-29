@@ -12,8 +12,16 @@ export const createAuthRouter = (): Router => {
   const router = Router();
   const userRepository = new PrismaUserRepository();
   const passwordHasher = new BcryptPasswordHasher();
-  const accessTokenService = new JwtAccessTokenService(env.jwtSecret);
-  const loginUseCase = new LoginUseCase(userRepository, passwordHasher, accessTokenService);
+  const accessTokenService = new JwtAccessTokenService(
+    env.jwtSecret,
+    env.jwtAccessTokenExpiresIn
+  );
+  const loginUseCase = new LoginUseCase(
+    userRepository,
+    passwordHasher,
+    accessTokenService,
+    env.jwtAccessTokenExpiresIn
+  );
   const authController = new AuthController(loginUseCase);
 
   router.post('/login', loginRateLimitMiddleware, authController.login);

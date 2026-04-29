@@ -5,5 +5,5 @@ import { createServer } from './infrastructure/server.js';
 const app = createServer();
 
 app.listen(env.port, () => {
-  logger.info({ port: env.port }, `Backend listening on http://localhost:${env.port}`);
+  logger.info({ port: env.port }, 'Backend listening');
 });

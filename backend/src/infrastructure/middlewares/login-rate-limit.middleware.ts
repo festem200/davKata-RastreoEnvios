@@ -1,9 +1,11 @@
 import { rateLimit } from 'express-rate-limit';
 
+import { env } from '../config/env.js';
+
 export const loginRateLimitMiddleware = rateLimit({
   legacyHeaders: false,
-  limit: 5,
+  limit: env.loginRateLimitMaxAttempts,
   message: { message: 'Demasiados intentos de login. Intenta nuevamente en un minuto' },
   standardHeaders: true,
-  windowMs: 60_000
+  windowMs: env.loginRateLimitWindowMs
 });

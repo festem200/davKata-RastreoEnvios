@@ -4,8 +4,6 @@ import type { PasswordHasher } from '../ports/password-hasher.js';
 import type { UserRole } from '../../domain/constants/user-role.js';
 import type { UserRepository } from '../../domain/ports/user-repository.js';
 
-export const ACCESS_TOKEN_EXPIRES_IN = '8h' as const;
-
 export interface LoginCommand {
   email: string;
   password: string;
@@ -13,7 +11,7 @@ export interface LoginCommand {
 
 export interface LoginResult {
   accessToken: string;
-  expiresIn: typeof ACCESS_TOKEN_EXPIRES_IN;
+  expiresIn: string;
   user: {
     id: number;
     role: UserRole;
@@ -24,7 +22,8 @@ export class LoginUseCase {
   constructor(
     private readonly userRepository: UserRepository,
     private readonly passwordHasher: PasswordHasher,
-    private readonly accessTokenService: AccessTokenService
+    private readonly accessTokenService: AccessTokenService,
+    private readonly accessTokenExpiresIn: string
   ) {}
 
   async execute(command: LoginCommand): Promise<LoginResult> {
@@ -47,7 +46,7 @@ export class LoginUseCase {
         email: user.email,
         role: user.role
       }),
-      expiresIn: ACCESS_TOKEN_EXPIRES_IN,
+      expiresIn: this.accessTokenExpiresIn,
       user: {
         id: Number(user.id),
         role: user.role
@@ -55,4 +54,3 @@ export class LoginUseCase {
     };
   }
 }
-
