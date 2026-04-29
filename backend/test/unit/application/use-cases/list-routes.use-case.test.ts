@@ -9,6 +9,15 @@ import {
 describe('ListRoutesUseCase', () => {
   it('lists routes with 20 records per page', async () => {
     const repository: RouteRepository = {
+      create: async (params) => ({
+        id: '1',
+        ...params,
+        createdAt: '2024-04-29T10:00:00.000Z'
+      }),
+      update: async (params) => ({
+        ...params,
+        createdAt: '2024-04-29T10:00:00.000Z'
+      }),
       findAll: async (params) => ({
         data: [],
         pagination: {
@@ -33,6 +42,15 @@ describe('ListRoutesUseCase', () => {
 
   it('throws when the requested page is out of range', async () => {
     const repository: RouteRepository = {
+      create: async (params) => ({
+        id: '1',
+        ...params,
+        createdAt: '2024-04-29T10:00:00.000Z'
+      }),
+      update: async (params) => ({
+        ...params,
+        createdAt: '2024-04-29T10:00:00.000Z'
+      }),
       findAll: async (params) => ({
         data: [],
         pagination: {
