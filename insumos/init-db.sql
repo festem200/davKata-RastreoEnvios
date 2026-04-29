@@ -29,3 +29,46 @@ CREATE TABLE IF NOT EXISTS "user" (
 );
 
 COMMENT ON COLUMN route.status IS 'Estados posibles: ACTIVA, INACTIVA, SUSPENDIDA, EN_MANTENIMIENTO';
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'ShipmentStatus') THEN
+    CREATE TYPE "ShipmentStatus" AS ENUM (
+      'ACTIVA',
+      'INACTIVA',
+      'SUSPENDIDA',
+      'EN_MANTENIMIENTO'
+    );
+  END IF;
+END
+$$;
+
+CREATE TABLE IF NOT EXISTS shipment (
+  id BIGSERIAL PRIMARY KEY,
+  tracking_number VARCHAR(40) NOT NULL UNIQUE,
+  recipient VARCHAR(160) NOT NULL,
+  origin VARCHAR(160) NOT NULL,
+  destination VARCHAR(160) NOT NULL,
+  status "ShipmentStatus" NOT NULL,
+  estimated_delivery DATE NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO shipment (
+  tracking_number,
+  recipient,
+  origin,
+  destination,
+  status,
+  estimated_delivery
+)
+VALUES (
+  'DAV123456789',
+  'Cliente Demo',
+  'Bogota, Colombia',
+  'Medellin, Colombia',
+  'ACTIVA',
+  '2026-05-02'
+)
+ON CONFLICT (tracking_number) DO NOTHING;
