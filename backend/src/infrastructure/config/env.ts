@@ -3,7 +3,14 @@ import { z } from 'zod';
 
 const envSchema = z.object({
   PORT: z.coerce.number().int().positive().max(65_535).default(3000),
-  CORS_ORIGIN: z.string().url().default('http://localhost:4200'),
+  CORS_ORIGIN: z
+    .string()
+    .trim()
+    .refine((origin) => origin !== '*', {
+      message: 'CORS_ORIGIN must be an explicit URL, not *'
+    })
+    .pipe(z.string().url())
+    .default('http://localhost:4200'),
   DATABASE_URL: z.string().min(1),
   JWT_SECRET: z.string().min(16),
   TRACKING_SOAP_URL: z.string().url().default('http://localhost:8088/mockTrackingBinding')
