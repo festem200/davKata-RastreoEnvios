@@ -1,0 +1,18 @@
+<article class="ranking-card">
+  <header>
+    <h2>{{ title() }}</h2>
+  </header>
+
+  <ol>
+    @for (item of items(); track item.id; let index = $index) {
+      <li>
+        <span class="rank">{{ index + 1 }}</span>
+        <div>
+          <strong>{{ item.title }}</strong>
+          <p>{{ item.subtitle }}</p>
+        </div>
+        <span class="value">{{ item.value }}</span>
+      </li>
+    }
+  </ol>
+</article>

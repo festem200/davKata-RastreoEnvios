@@ -1,0 +1,192 @@
+<app-shell>
+  <header class="routes-header">
+    <div>
+      <p>Gestion de rutas</p>
+      <h1>Rutas de transporte</h1>
+    </div>
+
+    <div class="header-actions">
+      <span>{{ isAdmin() ? 'Administrador' : 'Solo lectura' }}</span>
+      @if (isAdmin()) {
+        <button type="button" (click)="showCreateForm()">Nueva ruta</button>
+      }
+    </div>
+  </header>
+
+  @if (successMessage()) {
+    <p class="message message--success" role="status">{{ successMessage() }}</p>
+  }
+
+  @if (errorMessage()) {
+    <section class="message message--error" role="alert">
+      <strong>{{ errorMessage() }}</strong>
+      <button type="button" (click)="loadRoutes(pagination()?.page ?? 1)">Reintentar</button>
+    </section>
+  }
+
+  @if (isAdmin() && isFormVisible()) {
+    <section class="form-card" aria-labelledby="route-form-title">
+      <div class="form-card__header">
+        <h2 id="route-form-title">{{ selectedRoute() ? 'Editar ruta' : 'Crear ruta' }}</h2>
+        <button type="button" class="ghost-button" (click)="cancelForm()">Cancelar</button>
+      </div>
+
+      <form [formGroup]="routeForm" (ngSubmit)="saveRoute()" novalidate>
+        <label>
+          Origen
+          <input type="text" formControlName="originCity" />
+          @if (hasFieldError('originCity', 'required')) {
+            <small>El origen es requerido</small>
+          }
+        </label>
+
+        <label>
+          Destino
+          <input type="text" formControlName="destinationCity" />
+          @if (hasFieldError('destinationCity', 'required')) {
+            <small>El destino es requerido</small>
+          }
+        </label>
+
+        <label>
+          Distancia km
+          <input type="number" min="0.01" step="0.01" formControlName="distanceKm" />
+          @if (hasFieldError('distanceKm', 'required') || hasFieldError('distanceKm', 'min')) {
+            <small>Ingresa una distancia valida</small>
+          }
+        </label>
+
+        <label>
+          Tiempo estimado horas
+          <input type="number" min="0.01" step="0.01" formControlName="estimatedTimeHours" />
+          @if (
+            hasFieldError('estimatedTimeHours', 'required') ||
+            hasFieldError('estimatedTimeHours', 'min')
+          ) {
+            <small>Ingresa un tiempo valido</small>
+          }
+        </label>
+
+        <label>
+          Tipo de vehiculo
+          <input type="text" formControlName="vehicleType" />
+          @if (hasFieldError('vehicleType', 'required')) {
+            <small>El tipo de vehiculo es requerido</small>
+          }
+        </label>
+
+        <label>
+          Transportadora
+          <input type="text" formControlName="carrier" />
+          @if (hasFieldError('carrier', 'required')) {
+            <small>La transportadora es requerida</small>
+          }
+        </label>
+
+        <label>
+          Costo USD
+          <input type="number" min="0.01" step="0.01" formControlName="costUsd" />
+          @if (hasFieldError('costUsd', 'required') || hasFieldError('costUsd', 'min')) {
+            <small>Ingresa un costo valido</small>
+          }
+        </label>
+
+        <label>
+          Estado
+          <select formControlName="status">
+            @for (status of statuses; track status) {
+              <option [value]="status">{{ status }}</option>
+            }
+          </select>
+        </label>
+
+        <div class="form-actions">
+          <button type="button" class="ghost-button" (click)="cancelForm()">Cancelar</button>
+          <button type="submit" [disabled]="isSaving()">
+            {{ isSaving() ? 'Guardando...' : 'Guardar ruta' }}
+          </button>
+        </div>
+      </form>
+    </section>
+  }
+
+  <section class="table-card" aria-label="Listado de rutas">
+    <div class="table-card__header">
+      <div>
+        <h2>Listado</h2>
+        @if (pagination(); as pageInfo) {
+          <p>{{ pageInfo.total }} rutas registradas</p>
+        }
+      </div>
+    </div>
+
+    @if (isLoading()) {
+      <div class="empty-state">Cargando rutas...</div>
+    } @else if (routes().length === 0) {
+      <div class="empty-state">No hay rutas para mostrar.</div>
+    } @else {
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Ruta</th>
+              <th>Vehiculo</th>
+              <th>Transportadora</th>
+              <th>Distancia</th>
+              <th>Costo</th>
+              <th>Estado</th>
+              @if (isAdmin()) {
+                <th>Acciones</th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (route of routes(); track route.id) {
+              <tr>
+                <td>
+                  <strong>{{ route.originCity }} - {{ route.destinationCity }}</strong>
+                  <span>{{ route.estimatedTimeHours }} h estimadas</span>
+                </td>
+                <td>{{ route.vehicleType }}</td>
+                <td>{{ route.carrier }}</td>
+                <td>{{ route.distanceKm }} km</td>
+                <td>{{ formatCurrency(route.costUsd) }}</td>
+                <td>
+                  <span class="status" [attr.data-status]="route.status">{{ route.status }}</span>
+                </td>
+                @if (isAdmin()) {
+                  <td>
+                    <div class="row-actions">
+                      <button type="button" (click)="showEditForm(route)">Editar</button>
+                      <button type="button" class="danger" (click)="deleteRoute(route)">
+                        Eliminar
+                      </button>
+                    </div>
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    @if (pagination(); as pageInfo) {
+      <footer>
+        <span>Pagina {{ pageInfo.page }} de {{ pageInfo.totalPages }}</span>
+        <div>
+          <button type="button" [disabled]="pageInfo.page <= 1 || isLoading()" (click)="goToPreviousPage()">
+            Anterior
+          </button>
+          <button
+            type="button"
+            [disabled]="pageInfo.page >= pageInfo.totalPages || isLoading()"
+            (click)="goToNextPage()"
+          >
+            Siguiente
+          </button>
+        </div>
+      </footer>
+    }
+  </section>
+</app-shell>

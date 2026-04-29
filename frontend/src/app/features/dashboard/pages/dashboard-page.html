@@ -1,23 +1,4 @@
-<section class="dashboard-shell">
-  <aside class="sidebar" aria-label="Menu principal">
-    <div class="profile">
-      <div class="avatar">{{ user?.name?.charAt(0) ?? 'U' }}</div>
-      <strong>{{ user?.name ?? 'Usuario' }}</strong>
-      <span>{{ user?.email }}</span>
-    </div>
-
-    <nav>
-      <a class="active">Dashboard</a>
-      <a>Envios</a>
-      <a>Rutas</a>
-      <a>Reportes</a>
-      <a>Configuracion</a>
-    </nav>
-
-    <button type="button" (click)="logout()">Cerrar sesion</button>
-  </aside>
-
-  <main>
+<app-shell>
     <header>
       <div>
         <p>Panel privado</p>
@@ -27,22 +8,26 @@
     </header>
 
     <section class="summary" aria-label="Resumen">
-      <article>
-        <span>Total envios</span>
-        <strong>5483</strong>
-      </article>
-      <article>
-        <span>Ordenes activas</span>
-        <strong>2859</strong>
-      </article>
-      <article>
-        <span>En transito</span>
-        <strong>1248</strong>
-      </article>
-      <article class="warning">
-        <span>Incidencias</span>
-        <strong>38</strong>
-      </article>
+      <app-metric-card label="Total rutas" [value]="stats()?.totalRoutes ?? 0" />
+      <app-metric-card label="Rutas activas" [value]="activeRoutes()" />
+      <app-metric-card label="En mantenimiento" [value]="maintenanceRoutes()" />
+      <app-metric-card label="Suspendidas" [value]="suspendedRoutes()" tone="warning" />
     </section>
-  </main>
-</section>
+
+    @if (isLoading()) {
+      <section class="dashboard-state" aria-live="polite">
+        <strong>Cargando indicadores...</strong>
+        <p>Estamos consultando las rutas disponibles.</p>
+      </section>
+    } @else if (errorMessage()) {
+      <section class="dashboard-state dashboard-state--error" role="alert">
+        <strong>{{ errorMessage() }}</strong>
+        <button type="button" (click)="retry()">Reintentar</button>
+      </section>
+    } @else {
+      <section class="dashboard-grid" aria-label="Indicadores de rutas">
+        <app-doughnut-chart title="Total de rutas por estado" [items]="statusTotals()" />
+        <app-ranked-routes title="Top 5 rutas con mayor costo" [items]="topCostRoutes()" />
+      </section>
+    }
+</app-shell>

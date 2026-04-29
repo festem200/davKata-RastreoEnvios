@@ -20,6 +20,14 @@ export const routes: Routes = [
       import('./features/dashboard/pages/dashboard-page').then((module) => module.DashboardPage)
   },
   {
+    path: 'routes',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/routes/pages/routes-page/routes-page.component').then(
+        (module) => module.RoutesPageComponent
+      )
+  },
+  {
     path: 'tracking',
     canActivate: [authGuard],
     loadComponent: () =>
