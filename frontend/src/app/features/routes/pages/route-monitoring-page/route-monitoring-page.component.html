@@ -1,0 +1,215 @@
+<app-shell>
+  <header class="monitoring-header">
+    <div>
+      <p>Monitoreo en tiempo real</p>
+      <h1>Seguimiento de rutas activas</h1>
+    </div>
+
+    <div class="monitoring-header__meta">
+      <span>{{ activeRoutesCount() }} rutas activas</span>
+      @if (lastRefreshAt()) {
+        <small>Actualizado {{ lastRefreshAt() | date: 'shortTime' }}</small>
+      }
+      <button type="button" (click)="retry()" [disabled]="isRefreshing()">
+        {{ isRefreshing() ? 'Actualizando...' : 'Actualizar' }}
+      </button>
+    </div>
+  </header>
+
+  @if (isLoading()) {
+    <section class="monitoring-state" aria-live="polite">
+      <strong>Cargando tracking...</strong>
+      <p>Consultando rutas activas y su posicion actual.</p>
+    </section>
+  } @else if (errorMessage()) {
+    <section class="monitoring-state monitoring-state--error" role="alert">
+      <strong>{{ errorMessage() }}</strong>
+      <button type="button" (click)="retry()">Reintentar</button>
+    </section>
+  } @else if (rows().length === 0) {
+    <section class="monitoring-state" aria-live="polite">
+      <strong>No hay rutas activas.</strong>
+      <p>Cuando existan rutas con estado ACTIVE, ACTIVA o EN_TRANSITO se mostraran aqui.</p>
+    </section>
+  } @else {
+    <section class="table-card" aria-label="Seguimiento de rutas activas">
+      <div class="table-card__header">
+        <div>
+          <h2>Listado de monitoreo</h2>
+          <p>{{ pagination().total }} rutas encontradas de {{ activeRoutesCount() }} activas</p>
+        </div>
+      </div>
+
+      <form class="filters" [formGroup]="filterForm">
+        <label>
+          Buscar
+          <input
+            type="search"
+            formControlName="search"
+            placeholder="Origen, destino, transportadora..."
+          />
+        </label>
+
+        <label>
+          Vehiculo
+          <select formControlName="vehicleType">
+            <option value="TODOS">Todos</option>
+            @for (vehicleType of vehicleTypes(); track vehicleType) {
+              <option [value]="vehicleType">{{ vehicleType }}</option>
+            }
+          </select>
+        </label>
+
+        <label>
+          Transportadora
+          <select formControlName="carrier">
+            <option value="TODOS">Todas</option>
+            @for (carrier of carriers(); track carrier) {
+              <option [value]="carrier">{{ carrier }}</option>
+            }
+          </select>
+        </label>
+
+        <label>
+          Seguimiento
+          <select formControlName="trackingStatus">
+            <option value="TODOS">Todos</option>
+            <option value="DISPONIBLE">Disponible</option>
+            <option value="NO_DISPONIBLE">No disponible</option>
+          </select>
+        </label>
+
+        <div class="filter-actions">
+          <button type="button" class="ghost-button" (click)="resetFilters()">Limpiar</button>
+        </div>
+      </form>
+
+      @if (paginatedRows().length === 0) {
+        <div class="empty-state">No hay rutas para mostrar con los filtros actuales.</div>
+      } @else {
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>
+                  <button type="button" class="sort-button" (click)="sortBy('route')">
+                    Ruta {{ sortLabel('route') }}
+                  </button>
+                </th>
+                <th>Ubicacion / coordenadas</th>
+                <th>
+                  <button type="button" class="sort-button" (click)="sortBy('vehicleType')">
+                    Vehiculo {{ sortLabel('vehicleType') }}
+                  </button>
+                </th>
+                <th>
+                  <button type="button" class="sort-button" (click)="sortBy('carrier')">
+                    Transportadora {{ sortLabel('carrier') }}
+                  </button>
+                </th>
+                <th>
+                  <button type="button" class="sort-button" (click)="sortBy('progress')">
+                    Progreso {{ sortLabel('progress') }}
+                  </button>
+                </th>
+                <th>
+                  <button type="button" class="sort-button" (click)="sortBy('eta')">
+                    ETA {{ sortLabel('eta') }}
+                  </button>
+                </th>
+                <th>
+                  <button type="button" class="sort-button" (click)="sortBy('timestamp')">
+                    Ultima actualizacion {{ sortLabel('timestamp') }}
+                  </button>
+                </th>
+                <th>
+                  <button type="button" class="sort-button" (click)="sortBy('trackingStatus')">
+                    Estado seguimiento {{ sortLabel('trackingStatus') }}
+                  </button>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of paginatedRows(); track row.route.id) {
+                <tr>
+                  <td>
+                    <strong>{{ row.route.originCity }} - {{ row.route.destinationCity }}</strong>
+                    <span>{{ row.route.distanceKm }} km</span>
+                  </td>
+                  @if (row.tracking; as tracking) {
+                    <td>{{ formatCoordinates(tracking) }}</td>
+                    <td>{{ row.route.vehicleType }}</td>
+                    <td>{{ row.route.carrier }}</td>
+                    <td>
+                      <div class="progress-cell">
+                        <div
+                          class="progress-bar"
+                          role="progressbar"
+                          [attr.aria-valuenow]="normalizeProgress(tracking.progressPercent)"
+                          aria-valuemin="0"
+                          aria-valuemax="100"
+                        >
+                          <span
+                            [style.width.%]="normalizeProgress(tracking.progressPercent)"
+                          ></span>
+                        </div>
+                        <strong
+                          >{{
+                            normalizeProgress(tracking.progressPercent) | number: '1.0-0'
+                          }}%</strong
+                        >
+                      </div>
+                    </td>
+                    <td>{{ formatEta(tracking.etaMinutes) }}</td>
+                    <td>{{ tracking.timestamp | date: 'medium' }}</td>
+                    <td><span class="tracking-status">Disponible</span></td>
+                  } @else {
+                    <td class="tracking-unavailable">{{ row.errorMessage }}</td>
+                    <td>{{ row.route.vehicleType }}</td>
+                    <td>{{ row.route.carrier }}</td>
+                    <td class="tracking-unavailable">Sin datos</td>
+                    <td class="tracking-unavailable">Sin datos</td>
+                    <td class="tracking-unavailable">Sin datos</td>
+                    <td>
+                      <span class="tracking-status tracking-status--error">No disponible</span>
+                    </td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+      <footer>
+        <label class="page-size">
+          Por pagina
+          <select [value]="pageSize()" (change)="setPageSize($any($event.target).value)">
+            @for (option of pageSizeOptions; track option) {
+              <option [value]="option">{{ option }}</option>
+            }
+          </select>
+        </label>
+
+        <span>Pagina {{ pagination().page }} de {{ pagination().totalPages }}</span>
+
+        <div>
+          <button
+            type="button"
+            [disabled]="pagination().page <= 1 || isLoading()"
+            (click)="goToPreviousPage()"
+          >
+            Anterior
+          </button>
+          <button
+            type="button"
+            [disabled]="pagination().page >= pagination().totalPages || isLoading()"
+            (click)="goToNextPage()"
+          >
+            Siguiente
+          </button>
+        </div>
+      </footer>
+    </section>
+  }
+</app-shell>

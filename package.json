@@ -1,0 +1,21 @@
+{
+  "name": "davkata-rastreo-envios",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev": "npm run dev:backend & npm run dev:frontend",
+    "dev:frontend": "npm --workspace frontend start",
+    "dev:backend": "npm --workspace backend run dev",
+    "build": "npm --workspaces run build",
+    "test": "npm --workspaces run test",
+    "test:integration": "npm --workspace backend run test:integration",
+    "test:coverage": "npm --workspace backend run test:coverage"
+  },
+  "engines": {
+    "node": ">=24 <25"
+  }
+}
