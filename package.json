@@ -11,7 +11,9 @@
     "dev:frontend": "npm --workspace frontend start",
     "dev:backend": "npm --workspace backend run dev",
     "build": "npm --workspaces run build",
-    "test": "npm --workspaces run test"
+    "test": "npm --workspaces run test",
+    "test:integration": "npm --workspace backend run test:integration",
+    "test:coverage": "npm --workspace backend run test:coverage"
   },
   "engines": {
     "node": ">=24 <25"

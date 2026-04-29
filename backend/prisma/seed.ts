@@ -79,7 +79,7 @@ const seedRoutesFromCsv = async () => {
     return;
   }
 
-  await prisma.route.deleteMany();
+  await prisma.$executeRaw`TRUNCATE TABLE "route" RESTART IDENTITY`;
   await prisma.route.createMany({ data: routes });
   console.log(`Seeded ${routes.length} routes from ${routesCsvPath}`);
 };

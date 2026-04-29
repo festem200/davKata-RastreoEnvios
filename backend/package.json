@@ -7,10 +7,14 @@
     "dev": "tsx watch src/main.ts",
     "build": "prisma generate && tsc -p tsconfig.json",
     "start": "node dist/main.js",
-    "test": "vitest run",
+    "test": "npm run test:unit",
+    "test:unit": "NODE_OPTIONS=\"--experimental-vm-modules --no-warnings\" jest --testMatch \"<rootDir>/test/unit/**/*.test.ts\"",
+    "test:integration": "tsx test/setup/prepare-integration-db.ts && NODE_OPTIONS=\"--experimental-vm-modules --no-warnings\" jest --testMatch \"<rootDir>/test/integration/**/*.test.ts\" --runInBand",
+    "test:coverage": "NODE_OPTIONS=\"--experimental-vm-modules --no-warnings\" jest --coverage --testMatch \"<rootDir>/test/unit/**/*.test.ts\"",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
     "prisma:studio": "prisma studio",
+    "db:setup": "prisma generate && npm run db:seed",
     "db:seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
@@ -26,11 +30,13 @@
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
+    "@types/jest": "^30.0.0",
     "@types/node": "^25.0.2",
     "@types/pg": "^8.20.0",
+    "jest": "^30.3.0",
     "prisma": "^7.8.0",
+    "ts-jest": "^29.4.9",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3",
-    "vitest": "^4.0.15"
+    "typescript": "^5.9.3"
   }
 }

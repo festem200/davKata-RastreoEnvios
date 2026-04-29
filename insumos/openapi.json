@@ -1,0 +1,340 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "davKata Rastreo Envios API",
+    "description": "API backend para administracion de rutas de transporte.",
+    "version": "0.1.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Servidor local de desarrollo"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Health",
+      "description": "Estado del servicio"
+    },
+    {
+      "name": "Routes",
+      "description": "Rutas de transporte"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Consulta el estado del backend",
+        "description": "Permite verificar que el servicio HTTP esta respondiendo.",
+        "operationId": "getHealth",
+        "responses": {
+          "200": {
+            "description": "Servicio disponible.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                },
+                "examples": {
+                  "ok": {
+                    "summary": "Servicio activo",
+                    "value": {
+                      "status": "ok"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/routes": {
+      "get": {
+        "tags": [
+          "Routes"
+        ],
+        "summary": "Lista rutas de transporte",
+        "description": "Retorna rutas de transporte con paginacion fija de 20 registros por pagina.",
+        "operationId": "listRoutes",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Numero de pagina solicitado. Debe ser un entero positivo. Por defecto es 1.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "example": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Listado paginado de rutas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedRoutesResponse"
+                },
+                "examples": {
+                  "firstPage": {
+                    "summary": "Primera pagina con resultados",
+                    "value": {
+                      "data": [
+                        {
+                          "id": "1",
+                          "originCity": "Bogota",
+                          "destinationCity": "Medellin",
+                          "distanceKm": 415,
+                          "estimatedTimeHours": 8.5,
+                          "vehicleType": "CAMION",
+                          "carrier": "TCC",
+                          "costUsd": 320,
+                          "status": "ACTIVA",
+                          "createdAt": "2024-01-05T08:00:00.000Z"
+                        },
+                        {
+                          "id": "2",
+                          "originCity": "Medellin",
+                          "destinationCity": "Cali",
+                          "distanceKm": 418,
+                          "estimatedTimeHours": 9,
+                          "vehicleType": "TRACTOMULA",
+                          "carrier": "Servientrega",
+                          "costUsd": 480,
+                          "status": "ACTIVA",
+                          "createdAt": "2024-01-06T09:00:00.000Z"
+                        }
+                      ],
+                      "pagination": {
+                        "page": 1,
+                        "perPage": 20,
+                        "total": 100,
+                        "totalPages": 5
+                      }
+                    }
+                  },
+                  "emptyDatabase": {
+                    "summary": "Base sin rutas cargadas",
+                    "value": {
+                      "data": [],
+                      "pagination": {
+                        "page": 1,
+                        "perPage": 20,
+                        "total": 0,
+                        "totalPages": 0
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Parametro page invalido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "invalidPage": {
+                    "summary": "La pagina no es un entero positivo",
+                    "value": {
+                      "message": "Pagina invalida"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "La pagina solicitada esta fuera del rango disponible.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoutePageNotFoundResponse"
+                },
+                "examples": {
+                  "pageOutOfRange": {
+                    "summary": "Pagina mayor al total de paginas",
+                    "value": {
+                      "message": "Pagina no encontrada",
+                      "pagination": {
+                        "page": 20,
+                        "perPage": 20,
+                        "total": 100,
+                        "totalPages": 5
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HealthResponse": {
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "ok"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Pagina invalida"
+          }
+        }
+      },
+      "Pagination": {
+        "type": "object",
+        "required": [
+          "page",
+          "perPage",
+          "total",
+          "totalPages"
+        ],
+        "properties": {
+          "page": {
+            "type": "integer",
+            "minimum": 1,
+            "example": 1
+          },
+          "perPage": {
+            "type": "integer",
+            "minimum": 1,
+            "example": 20
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0,
+            "example": 100
+          },
+          "totalPages": {
+            "type": "integer",
+            "minimum": 0,
+            "example": 5
+          }
+        }
+      },
+      "Route": {
+        "type": "object",
+        "required": [
+          "id",
+          "originCity",
+          "destinationCity",
+          "distanceKm",
+          "estimatedTimeHours",
+          "vehicleType",
+          "carrier",
+          "costUsd",
+          "status",
+          "createdAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identificador de la ruta. Se serializa como string porque en base de datos es BigInt.",
+            "example": "1"
+          },
+          "originCity": {
+            "type": "string",
+            "example": "Bogota"
+          },
+          "destinationCity": {
+            "type": "string",
+            "example": "Medellin"
+          },
+          "distanceKm": {
+            "type": "number",
+            "format": "double",
+            "example": 415
+          },
+          "estimatedTimeHours": {
+            "type": "number",
+            "format": "double",
+            "example": 8.5
+          },
+          "vehicleType": {
+            "type": "string",
+            "example": "CAMION"
+          },
+          "carrier": {
+            "type": "string",
+            "example": "TCC"
+          },
+          "costUsd": {
+            "type": "number",
+            "format": "double",
+            "example": 320
+          },
+          "status": {
+            "type": "string",
+            "example": "ACTIVA"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-05T08:00:00.000Z"
+          }
+        }
+      },
+      "PaginatedRoutesResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "pagination"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Route"
+            }
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/Pagination"
+          }
+        }
+      },
+      "RoutePageNotFoundResponse": {
+        "type": "object",
+        "required": [
+          "message",
+          "pagination"
+        ],
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Pagina no encontrada"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/Pagination"
+          }
+        }
+      }
+    }
+  }
+}

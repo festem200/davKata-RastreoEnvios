@@ -1,6 +1,0 @@
-export enum ShipmentStatus {
-  ACTIVA = 'ACTIVA',
-  INACTIVA = 'INACTIVA',
-  SUSPENDIDA = 'SUSPENDIDA',
-  EN_MANTENIMIENTO = 'EN_MANTENIMIENTO'
-}

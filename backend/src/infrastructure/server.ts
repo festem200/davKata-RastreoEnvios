@@ -2,7 +2,7 @@ import cors from 'cors';
 import express from 'express';
 
 import { env } from './config/env.js';
-import { createTrackingRouter } from './routes/tracking.routes.js';
+import { createRoutesRouter } from './routes/routes.routes.js';
 
 export const createServer = () => {
   const app = express();
@@ -14,7 +14,7 @@ export const createServer = () => {
     response.json({ status: 'ok' });
   });
 
-  app.use('/api/tracking', createTrackingRouter());
+  app.use('/api/routes', createRoutesRouter());
 
   return app;
 };

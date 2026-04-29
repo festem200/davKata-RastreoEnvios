@@ -109,6 +109,14 @@ insumos/init-db.sql
 Comandos Prisma:
 
 ```bash
+npm --workspace backend run db:setup
+```
+
+Ese comando genera el cliente Prisma y carga la data inicial.
+
+Comandos Prisma por separado:
+
+```bash
 npm --workspace backend run prisma:generate
 npm --workspace backend run prisma:push
 npm --workspace backend run db:seed
@@ -174,8 +182,32 @@ URLs locales:
 - Backend: `http://localhost:3000`
 - Salud backend: `http://localhost:3000/health`
 
-Guia demo:
+Contrato OpenAPI:
 
 ```text
-DAV123456789
+insumos/openapi.json
 ```
+
+## Pruebas
+
+Ejecutar pruebas unitarias del backend y frontend:
+
+```bash
+npm test
+```
+
+Ejecutar pruebas unitarias del backend con cobertura:
+
+```bash
+npm run test:coverage
+```
+
+Ejecutar pruebas de integracion de repositorios Prisma:
+
+```bash
+npm run test:integration
+```
+
+Las pruebas de integracion usan PostgreSQL y preparan una base separada con sufijo `_test`
+derivada de `DATABASE_URL`, por ejemplo `dav_kata_rastreo_envios_test`.
+Tambien puedes definir `TEST_DATABASE_URL` en `backend/.env` si quieres usar otra base.
