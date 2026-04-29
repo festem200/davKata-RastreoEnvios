@@ -618,6 +618,115 @@
         }
       }
     },
+    "/api/routes/tracking/{id}": {
+      "get": {
+        "tags": [
+          "Routes"
+        ],
+        "summary": "Consulta tracking de una ruta",
+        "description": "Consulta el estado de tracking de una ruta a traves del adaptador de tracking.",
+        "operationId": "trackRoute",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Identificador positivo de la ruta.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1,
+              "maximum": 9223372036854775807,
+              "example": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Informacion de tracking de la ruta.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RouteTrackingResponse"
+                },
+                "examples": {
+                  "tracking": {
+                    "summary": "Tracking disponible",
+                    "value": {
+                      "routeId": "1",
+                      "lastLocation": "Bogota",
+                      "progressPercent": 40,
+                      "etaMinutes": 1,
+                      "timestamp": "2026-01-01"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Id invalido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "invalidId": {
+                    "summary": "Id invalido",
+                    "value": {
+                      "message": "Id de ruta invalido"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Servicio de tracking no disponible o respuesta invalida.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "unavailable": {
+                    "summary": "Servicio no disponible",
+                    "value": {
+                      "message": "Servicio de tracking no disponible"
+                    }
+                  },
+                  "invalidResponse": {
+                    "summary": "Respuesta invalida",
+                    "value": {
+                      "message": "Respuesta de tracking invalida"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error inesperado del servidor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "internalError": {
+                    "summary": "Error inesperado",
+                    "value": {
+                      "message": "Error interno del servidor"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/routes/{id}": {
         "put": {
           "tags": [
@@ -1202,6 +1311,41 @@
           "message": {
             "type": "string",
             "example": "status: Invalid option"
+          }
+        }
+      },
+      "RouteTrackingResponse": {
+        "type": "object",
+        "required": [
+          "routeId",
+          "lastLocation",
+          "progressPercent",
+          "etaMinutes",
+          "timestamp"
+        ],
+        "properties": {
+          "routeId": {
+            "type": "string",
+            "example": "1"
+          },
+          "lastLocation": {
+            "type": "string",
+            "example": "Bogota"
+          },
+          "progressPercent": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "example": 40
+          },
+          "etaMinutes": {
+            "type": "number",
+            "minimum": 0,
+            "example": 1
+          },
+          "timestamp": {
+            "type": "string",
+            "example": "2026-01-01"
           }
         }
       },

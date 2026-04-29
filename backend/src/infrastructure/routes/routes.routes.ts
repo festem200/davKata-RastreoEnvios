@@ -6,7 +6,10 @@ import { DeleteRouteUseCase } from '../../application/use-cases/delete-route.use
 import { FilterRoutesUseCase } from '../../application/use-cases/filter-routes.use-case.js';
 import { ImportRoutesUseCase } from '../../application/use-cases/import-routes.use-case.js';
 import { ListRoutesUseCase } from '../../application/use-cases/list-routes.use-case.js';
+import { TrackRouteUseCase } from '../../application/use-cases/track-route.use-case.js';
 import { UpdateRouteUseCase } from '../../application/use-cases/update-route.use-case.js';
+import { env } from '../config/env.js';
+import { SoapTrackingAdapter } from '../adapters/soap-tracking.adapter.js';
 import { RoutesController } from '../controllers/routes.controller.js';
 import { PrismaRouteRepository } from '../repositories/prisma-route.repository.js';
 
@@ -14,19 +17,22 @@ export const createRoutesRouter = (): Router => {
   const router = Router();
   const upload = multer({ storage: multer.memoryStorage() });
   const routeRepository = new PrismaRouteRepository();
+  const trackingAdapter = new SoapTrackingAdapter(env.trackingSoapUrl);
   const listRoutesUseCase = new ListRoutesUseCase(routeRepository);
   const createRouteUseCase = new CreateRouteUseCase(routeRepository);
   const updateRouteUseCase = new UpdateRouteUseCase(routeRepository);
   const deleteRouteUseCase = new DeleteRouteUseCase(routeRepository);
   const filterRoutesUseCase = new FilterRoutesUseCase(routeRepository);
   const importRoutesUseCase = new ImportRoutesUseCase(routeRepository);
+  const trackRouteUseCase = new TrackRouteUseCase(trackingAdapter);
   const routesController = new RoutesController(
     listRoutesUseCase,
     createRouteUseCase,
     updateRouteUseCase,
     deleteRouteUseCase,
     filterRoutesUseCase,
-    importRoutesUseCase
+    importRoutesUseCase,
+    trackRouteUseCase
   );
 
   /**
@@ -63,6 +69,21 @@ export const createRoutesRouter = (): Router => {
    * - 404: Requested page is outside the available pagination range.
    */
   router.get('/filter', routesController.filter);
+
+  /**
+   * GET /api/routes/tracking/:id
+   *
+   * Gets route tracking information through the tracking adapter.
+   *
+   * Params:
+   * - id: Positive route identifier.
+   *
+   * Responses:
+   * - 200: Route tracking information.
+   * - 400: Invalid route id.
+   * - 502: Tracking service unavailable or invalid response.
+   */
+  router.get('/tracking/:id', routesController.track);
 
   /**
    * POST /api/routes

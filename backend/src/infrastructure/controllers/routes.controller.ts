@@ -9,7 +9,12 @@ import {
   ListRoutesUseCase,
   RoutePageNotFoundError
 } from '../../application/use-cases/list-routes.use-case.js';
+import { TrackRouteUseCase } from '../../application/use-cases/track-route.use-case.js';
 import { UpdateRouteUseCase } from '../../application/use-cases/update-route.use-case.js';
+import {
+  InvalidTrackingResponseError,
+  TrackingServiceUnavailableError
+} from '../adapters/soap-tracking.adapter.js';
 import { createRouteRequestDtoSchema } from '../dtos/routes/create-route-request.dto.js';
 import { filterRoutesQueryDtoSchema } from '../dtos/routes/filter-routes-query.dto.js';
 import {
@@ -21,6 +26,7 @@ import { listRoutesQueryDtoSchema } from '../dtos/routes/list-routes-query.dto.j
 import { toListRoutesResponseDto } from '../dtos/routes/list-routes.mapper.js';
 import { routeIdParamDtoSchema } from '../dtos/routes/route-id-param.dto.js';
 import { toRouteResponseDto } from '../dtos/routes/route.mapper.js';
+import { toRouteTrackingResponseDto } from '../dtos/routes/route-tracking.mapper.js';
 import { updateRouteRequestDtoSchema } from '../dtos/routes/update-route-request.dto.js';
 
 export class RoutesController {
@@ -30,7 +36,8 @@ export class RoutesController {
     private readonly updateRouteUseCase: UpdateRouteUseCase,
     private readonly deleteRouteUseCase: DeleteRouteUseCase,
     private readonly filterRoutesUseCase: FilterRoutesUseCase,
-    private readonly importRoutesUseCase: ImportRoutesUseCase
+    private readonly importRoutesUseCase: ImportRoutesUseCase,
+    private readonly trackRouteUseCase: TrackRouteUseCase
   ) {}
 
   create = async (request: Request, response: Response): Promise<void> => {
@@ -123,6 +130,33 @@ export class RoutesController {
     } catch (error) {
       if (error instanceof RouteNotFoundError) {
         response.status(404).json({ message: error.message });
+        return;
+      }
+
+      throw error;
+    }
+  };
+
+  track = async (request: Request, response: Response): Promise<void> => {
+    const parsedParams = routeIdParamDtoSchema.safeParse(request.params);
+
+    if (!parsedParams.success) {
+      response.status(400).json({ message: 'Id de ruta invalido' });
+      return;
+    }
+
+    try {
+      const tracking = await this.trackRouteUseCase.execute(parsedParams.data.id);
+
+      response.json(toRouteTrackingResponseDto(tracking));
+    } catch (error) {
+      if (error instanceof TrackingServiceUnavailableError) {
+        response.status(502).json({ message: error.message });
+        return;
+      }
+
+      if (error instanceof InvalidTrackingResponseError) {
+        response.status(502).json({ message: error.message });
         return;
       }
 

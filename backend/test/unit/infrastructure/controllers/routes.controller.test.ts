@@ -6,7 +6,10 @@ import { DeleteRouteUseCase } from '../../../../src/application/use-cases/delete
 import { FilterRoutesUseCase } from '../../../../src/application/use-cases/filter-routes.use-case.js';
 import { ImportRoutesUseCase } from '../../../../src/application/use-cases/import-routes.use-case.js';
 import { ListRoutesUseCase } from '../../../../src/application/use-cases/list-routes.use-case.js';
+import { TrackRouteUseCase } from '../../../../src/application/use-cases/track-route.use-case.js';
 import { UpdateRouteUseCase } from '../../../../src/application/use-cases/update-route.use-case.js';
+import type { TrackingPort } from '../../../../src/domain/ports/tracking-port.js';
+import { TrackingServiceUnavailableError } from '../../../../src/infrastructure/adapters/soap-tracking.adapter.js';
 import type { RouteRepository } from '../../../../src/domain/ports/route-repository.js';
 import { RoutesController } from '../../../../src/infrastructure/controllers/routes.controller.js';
 
@@ -66,8 +69,23 @@ const createRepository = (overrides: Partial<RouteRepository>): RouteRepository 
   ...overrides
 });
 
-const createController = (repositoryOverrides: Partial<RouteRepository>) => {
+const createTrackingPort = (overrides: Partial<TrackingPort>): TrackingPort => ({
+  trackRoute: async (routeId) => ({
+    routeId,
+    lastLocation: 'Bogota',
+    progressPercent: 40,
+    etaMinutes: 1,
+    timestamp: '2026-01-01'
+  }),
+  ...overrides
+});
+
+const createController = (
+  repositoryOverrides: Partial<RouteRepository>,
+  trackingOverrides: Partial<TrackingPort> = {}
+) => {
   const repository = createRepository(repositoryOverrides);
+  const trackingPort = createTrackingPort(trackingOverrides);
 
   return new RoutesController(
     new ListRoutesUseCase(repository),
@@ -75,7 +93,8 @@ const createController = (repositoryOverrides: Partial<RouteRepository>) => {
     new UpdateRouteUseCase(repository),
     new DeleteRouteUseCase(repository),
     new FilterRoutesUseCase(repository),
-    new ImportRoutesUseCase(repository)
+    new ImportRoutesUseCase(repository),
+    new TrackRouteUseCase(trackingPort)
   );
 };
 
@@ -840,5 +859,69 @@ describe('RoutesController', () => {
         }
       ]
     });
+  });
+
+  it('returns route tracking information', async () => {
+    const controller = createController(
+      {},
+      {
+        trackRoute: async (routeId) => ({
+          routeId,
+          lastLocation: 'Bogota',
+          progressPercent: 40,
+          etaMinutes: 1,
+          timestamp: '2026-01-01'
+        })
+      }
+    );
+    const request = { params: { id: '1' } } as unknown as Request;
+    const response = createResponseMock();
+
+    await controller.track(request, response);
+
+    expect(response.status).not.toHaveBeenCalled();
+    expect(response.json).toHaveBeenCalledWith({
+      routeId: '1',
+      lastLocation: 'Bogota',
+      progressPercent: 40,
+      etaMinutes: 1,
+      timestamp: '2026-01-01'
+    });
+  });
+
+  it('returns 400 when route tracking id is invalid', async () => {
+    const controller = createController(
+      {},
+      {
+        trackRoute: async () => {
+          throw new Error('Tracking port should not be called');
+        }
+      }
+    );
+    const request = { params: { id: 'abc' } } as unknown as Request;
+    const response = createResponseMock();
+
+    await controller.track(request, response);
+
+    expect(response.status).toHaveBeenCalledWith(400);
+    expect(response.json).toHaveBeenCalledWith({ message: 'Id de ruta invalido' });
+  });
+
+  it('returns 502 when route tracking service is unavailable', async () => {
+    const controller = createController(
+      {},
+      {
+        trackRoute: async () => {
+          throw new TrackingServiceUnavailableError();
+        }
+      }
+    );
+    const request = { params: { id: '1' } } as unknown as Request;
+    const response = createResponseMock();
+
+    await controller.track(request, response);
+
+    expect(response.status).toHaveBeenCalledWith(502);
+    expect(response.json).toHaveBeenCalledWith({ message: 'Servicio de tracking no disponible' });
   });
 });

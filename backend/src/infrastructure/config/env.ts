@@ -7,5 +7,6 @@ if (!process.env.DATABASE_URL) {
 export const env = {
   port: Number(process.env.PORT ?? 3000),
   corsOrigin: process.env.CORS_ORIGIN ?? 'http://localhost:4200',
-  databaseUrl: process.env.DATABASE_URL
+  databaseUrl: process.env.DATABASE_URL,
+  trackingSoapUrl: process.env.TRACKING_SOAP_URL ?? 'http://localhost:8088/mockTrackingBinding'
 };
