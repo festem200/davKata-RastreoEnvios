@@ -164,4 +164,48 @@ describe('PrismaRouteRepository integration', () => {
 
     expect(result).toBeNull();
   });
+
+  it('deactivates a route by setting status to INACTIVA', async () => {
+    const repository = new PrismaRouteRepository();
+    const createdRoute = await prisma.route.create({
+      data: {
+        originCity: 'Ciudad Test Origen',
+        destinationCity: 'Ciudad Test Destino',
+        distanceKm: 123.45,
+        estimatedTimeHours: 6.5,
+        vehicleType: 'CAMION_TEST',
+        carrier: TEST_CARRIER,
+        costUsd: 456.78,
+        status: 'ACTIVA',
+        createdAt: TEST_CREATED_AT
+      }
+    });
+
+    const result = await repository.deactivate(createdRoute.id.toString());
+    const persistedRoute = await prisma.route.findUniqueOrThrow({
+      where: { id: createdRoute.id }
+    });
+
+    expect(result).toEqual({
+      id: createdRoute.id.toString(),
+      originCity: 'Ciudad Test Origen',
+      destinationCity: 'Ciudad Test Destino',
+      distanceKm: 123.45,
+      estimatedTimeHours: 6.5,
+      vehicleType: 'CAMION_TEST',
+      carrier: TEST_CARRIER,
+      costUsd: 456.78,
+      status: 'INACTIVA',
+      createdAt: TEST_CREATED_AT.toISOString()
+    });
+    expect(persistedRoute.status).toBe('INACTIVA');
+  });
+
+  it('returns null when deactivating a route that does not exist', async () => {
+    const repository = new PrismaRouteRepository();
+
+    const result = await repository.deactivate('999999999');
+
+    expect(result).toBeNull();
+  });
 });

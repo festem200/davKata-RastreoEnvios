@@ -1,11 +1,11 @@
 import { describe, expect, it } from '@jest/globals';
 
 import { RouteNotFoundError } from '../../../../src/application/errors/route-not-found.error.js';
-import { UpdateRouteUseCase } from '../../../../src/application/use-cases/update-route.use-case.js';
+import { DeleteRouteUseCase } from '../../../../src/application/use-cases/delete-route.use-case.js';
 import type { RouteRepository } from '../../../../src/domain/ports/route-repository.js';
 
-describe('UpdateRouteUseCase', () => {
-  it('updates a route through the repository', async () => {
+describe('DeleteRouteUseCase', () => {
+  it('deactivates a route through the repository', async () => {
     const repository: RouteRepository = {
       findAll: async () => ({
         data: [],
@@ -39,31 +39,11 @@ describe('UpdateRouteUseCase', () => {
       })
     };
 
-    const useCase = new UpdateRouteUseCase(repository);
-    const route = await useCase.execute({
-      id: '1',
-      originCity: 'Bogota',
-      destinationCity: 'Cali',
-      distanceKm: 460,
-      estimatedTimeHours: 9.5,
-      vehicleType: 'TRACTOMULA',
-      carrier: 'TCC',
-      costUsd: 520,
-      status: 'INACTIVA'
-    });
+    const useCase = new DeleteRouteUseCase(repository);
+    const route = await useCase.execute('1');
 
-    expect(route).toEqual({
-      id: '1',
-      originCity: 'Bogota',
-      destinationCity: 'Cali',
-      distanceKm: 460,
-      estimatedTimeHours: 9.5,
-      vehicleType: 'TRACTOMULA',
-      carrier: 'TCC',
-      costUsd: 520,
-      status: 'INACTIVA',
-      createdAt: '2024-04-29T10:00:00.000Z'
-    });
+    expect(route.status).toBe('INACTIVA');
+    expect(route.id).toBe('1');
   });
 
   it('throws when the route does not exist', async () => {
@@ -82,24 +62,15 @@ describe('UpdateRouteUseCase', () => {
         ...params,
         createdAt: '2024-04-29T10:00:00.000Z'
       }),
-      update: async () => null,
+      update: async (params) => ({
+        ...params,
+        createdAt: '2024-04-29T10:00:00.000Z'
+      }),
       deactivate: async () => null
     };
 
-    const useCase = new UpdateRouteUseCase(repository);
+    const useCase = new DeleteRouteUseCase(repository);
 
-    await expect(
-      useCase.execute({
-        id: '999',
-        originCity: 'Bogota',
-        destinationCity: 'Cali',
-        distanceKm: 460,
-        estimatedTimeHours: 9.5,
-        vehicleType: 'TRACTOMULA',
-        carrier: 'TCC',
-        costUsd: 520,
-        status: 'INACTIVA'
-      })
-    ).rejects.toBeInstanceOf(RouteNotFoundError);
+    await expect(useCase.execute('999')).rejects.toBeInstanceOf(RouteNotFoundError);
   });
 });

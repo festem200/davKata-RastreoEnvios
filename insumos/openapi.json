@@ -302,8 +302,9 @@
             }
           }
         }
-      },
-      "/api/routes/{id}": {
+      }
+    },
+    "/api/routes/{id}": {
         "put": {
           "tags": [
             "Routes"
@@ -446,9 +447,114 @@
               }
             }
           }
+        },
+        "delete": {
+          "tags": [
+            "Routes"
+          ],
+          "summary": "Desactiva una ruta de transporte",
+          "description": "Realiza una baja logica de la ruta cambiando su estado a INACTIVA.",
+          "operationId": "deleteRoute",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "description": "Identificador positivo de la ruta.",
+              "schema": {
+                "type": "integer",
+                "format": "int64",
+                "minimum": 1,
+                "maximum": 9223372036854775807,
+                "example": 1
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Ruta desactivada.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Route"
+                  },
+                  "examples": {
+                    "deactivated": {
+                      "summary": "Ruta desactivada",
+                      "value": {
+                        "id": "1",
+                        "originCity": "Bogota",
+                        "destinationCity": "Cali",
+                        "distanceKm": 460,
+                        "estimatedTimeHours": 9.5,
+                        "vehicleType": "TRACTOMULA",
+                        "carrier": "TCC",
+                        "costUsd": 520,
+                        "status": "INACTIVA",
+                        "createdAt": "2024-04-29T10:00:00.000Z"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Id invalido.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  },
+                  "examples": {
+                    "invalidId": {
+                      "summary": "Id invalido",
+                      "value": {
+                        "message": "Id de ruta invalido"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "La ruta no existe.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  },
+                  "examples": {
+                    "routeNotFound": {
+                      "summary": "Ruta no encontrada",
+                      "value": {
+                        "message": "Ruta no encontrada"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Error inesperado del servidor.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  },
+                  "examples": {
+                    "internalError": {
+                      "summary": "Error inesperado",
+                      "value": {
+                        "message": "Error interno del servidor"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       }
-    }
   },
   "components": {
     "schemas": {

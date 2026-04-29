@@ -1,14 +1,13 @@
 import type { Request, Response } from 'express';
 
+import { RouteNotFoundError } from '../../application/errors/route-not-found.error.js';
 import { CreateRouteUseCase } from '../../application/use-cases/create-route.use-case.js';
+import { DeleteRouteUseCase } from '../../application/use-cases/delete-route.use-case.js';
 import {
   ListRoutesUseCase,
   RoutePageNotFoundError
 } from '../../application/use-cases/list-routes.use-case.js';
-import {
-  RouteNotFoundError,
-  UpdateRouteUseCase
-} from '../../application/use-cases/update-route.use-case.js';
+import { UpdateRouteUseCase } from '../../application/use-cases/update-route.use-case.js';
 import { createRouteRequestDtoSchema } from '../dtos/routes/create-route-request.dto.js';
 import { listRoutesQueryDtoSchema } from '../dtos/routes/list-routes-query.dto.js';
 import { toListRoutesResponseDto } from '../dtos/routes/list-routes.mapper.js';
@@ -20,7 +19,8 @@ export class RoutesController {
   constructor(
     private readonly listRoutesUseCase: ListRoutesUseCase,
     private readonly createRouteUseCase: CreateRouteUseCase,
-    private readonly updateRouteUseCase: UpdateRouteUseCase
+    private readonly updateRouteUseCase: UpdateRouteUseCase,
+    private readonly deleteRouteUseCase: DeleteRouteUseCase
   ) {}
 
   create = async (request: Request, response: Response): Promise<void> => {
@@ -56,6 +56,28 @@ export class RoutesController {
         id: parsedParams.data.id,
         ...parsedBody.data
       });
+
+      response.json(toRouteResponseDto(route));
+    } catch (error) {
+      if (error instanceof RouteNotFoundError) {
+        response.status(404).json({ message: error.message });
+        return;
+      }
+
+      throw error;
+    }
+  };
+
+  delete = async (request: Request, response: Response): Promise<void> => {
+    const parsedParams = routeIdParamDtoSchema.safeParse(request.params);
+
+    if (!parsedParams.success) {
+      response.status(400).json({ message: 'Id de ruta invalido' });
+      return;
+    }
+
+    try {
+      const route = await this.deleteRouteUseCase.execute(parsedParams.data.id);
 
       response.json(toRouteResponseDto(route));
     } catch (error) {

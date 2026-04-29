@@ -18,6 +18,18 @@ describe('ListRoutesUseCase', () => {
         ...params,
         createdAt: '2024-04-29T10:00:00.000Z'
       }),
+      deactivate: async (id) => ({
+        id,
+        originCity: 'Bogota',
+        destinationCity: 'Medellin',
+        distanceKm: 415,
+        estimatedTimeHours: 8.5,
+        vehicleType: 'CAMION',
+        carrier: 'TCC',
+        costUsd: 320,
+        status: 'INACTIVA',
+        createdAt: '2024-04-29T10:00:00.000Z'
+      }),
       findAll: async (params) => ({
         data: [],
         pagination: {
@@ -49,6 +61,18 @@ describe('ListRoutesUseCase', () => {
       }),
       update: async (params) => ({
         ...params,
+        createdAt: '2024-04-29T10:00:00.000Z'
+      }),
+      deactivate: async (id) => ({
+        id,
+        originCity: 'Bogota',
+        destinationCity: 'Medellin',
+        distanceKm: 415,
+        estimatedTimeHours: 8.5,
+        vehicleType: 'CAMION',
+        carrier: 'TCC',
+        costUsd: 320,
+        status: 'INACTIVA',
         createdAt: '2024-04-29T10:00:00.000Z'
       }),
       findAll: async (params) => ({

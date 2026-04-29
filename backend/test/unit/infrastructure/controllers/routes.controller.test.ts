@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import { describe, expect, it, jest } from '@jest/globals';
 
 import { CreateRouteUseCase } from '../../../../src/application/use-cases/create-route.use-case.js';
+import { DeleteRouteUseCase } from '../../../../src/application/use-cases/delete-route.use-case.js';
 import { ListRoutesUseCase } from '../../../../src/application/use-cases/list-routes.use-case.js';
 import { UpdateRouteUseCase } from '../../../../src/application/use-cases/update-route.use-case.js';
 import type { RouteRepository } from '../../../../src/domain/ports/route-repository.js';
@@ -38,6 +39,18 @@ const createRepository = (overrides: Partial<RouteRepository>): RouteRepository 
     ...params,
     createdAt: '2024-04-29T10:00:00.000Z'
   }),
+  deactivate: async (id) => ({
+    id,
+    originCity: 'Bogota',
+    destinationCity: 'Cali',
+    distanceKm: 460,
+    estimatedTimeHours: 9.5,
+    vehicleType: 'TRACTOMULA',
+    carrier: 'TCC',
+    costUsd: 520,
+    status: 'INACTIVA',
+    createdAt: '2024-04-29T10:00:00.000Z'
+  }),
   ...overrides
 });
 
@@ -47,7 +60,8 @@ const createController = (repositoryOverrides: Partial<RouteRepository>) => {
   return new RoutesController(
     new ListRoutesUseCase(repository),
     new CreateRouteUseCase(repository),
-    new UpdateRouteUseCase(repository)
+    new UpdateRouteUseCase(repository),
+    new DeleteRouteUseCase(repository)
   );
 };
 
@@ -540,5 +554,85 @@ describe('RoutesController', () => {
     const response = createResponseMock();
 
     await expect(controller.update(request, response)).rejects.toThrow(error);
+  });
+
+  it('deactivates a route', async () => {
+    const repository: Partial<RouteRepository> = {
+      deactivate: async (id) => ({
+        id,
+        originCity: 'Bogota',
+        destinationCity: 'Cali',
+        distanceKm: 460,
+        estimatedTimeHours: 9.5,
+        vehicleType: 'TRACTOMULA',
+        carrier: 'TCC',
+        costUsd: 520,
+        status: 'INACTIVA',
+        createdAt: '2024-04-29T10:00:00.000Z'
+      })
+    };
+    const controller = createController(repository);
+    const request = { params: { id: '1' } } as unknown as Request;
+    const response = createResponseMock();
+
+    await controller.delete(request, response);
+
+    expect(response.status).not.toHaveBeenCalled();
+    expect(response.json).toHaveBeenCalledWith({
+      id: '1',
+      originCity: 'Bogota',
+      destinationCity: 'Cali',
+      distanceKm: 460,
+      estimatedTimeHours: 9.5,
+      vehicleType: 'TRACTOMULA',
+      carrier: 'TCC',
+      costUsd: 520,
+      status: 'INACTIVA',
+      createdAt: '2024-04-29T10:00:00.000Z'
+    });
+  });
+
+  it('returns 400 when route id to deactivate is invalid', async () => {
+    const repository: Partial<RouteRepository> = {
+      deactivate: async () => {
+        throw new Error('Repository should not be called');
+      }
+    };
+    const controller = createController(repository);
+    const request = { params: { id: 'abc' } } as unknown as Request;
+    const response = createResponseMock();
+
+    await controller.delete(request, response);
+
+    expect(response.status).toHaveBeenCalledWith(400);
+    expect(response.json).toHaveBeenCalledWith({ message: 'Id de ruta invalido' });
+  });
+
+  it('returns 404 when route to deactivate does not exist', async () => {
+    const repository: Partial<RouteRepository> = {
+      deactivate: async () => null
+    };
+    const controller = createController(repository);
+    const request = { params: { id: '999' } } as unknown as Request;
+    const response = createResponseMock();
+
+    await controller.delete(request, response);
+
+    expect(response.status).toHaveBeenCalledWith(404);
+    expect(response.json).toHaveBeenCalledWith({ message: 'Ruta no encontrada' });
+  });
+
+  it('rethrows unexpected route deactivation errors', async () => {
+    const error = new Error('Database unavailable');
+    const repository: Partial<RouteRepository> = {
+      deactivate: async () => {
+        throw error;
+      }
+    };
+    const controller = createController(repository);
+    const request = { params: { id: '1' } } as unknown as Request;
+    const response = createResponseMock();
+
+    await expect(controller.delete(request, response)).rejects.toThrow(error);
   });
 });

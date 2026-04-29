@@ -34,4 +34,5 @@ export interface RouteRepository {
   findAll(params: RoutePaginationParams): Promise<PaginatedRoutes>;
   create(params: CreateRouteParams): Promise<Route>;
   update(params: UpdateRouteParams): Promise<Route | null>;
+  deactivate(id: string): Promise<Route | null>;
 }

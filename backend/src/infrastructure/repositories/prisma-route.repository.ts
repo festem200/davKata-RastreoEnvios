@@ -35,6 +35,23 @@ export class PrismaRouteRepository implements RouteRepository {
     }
   }
 
+  async deactivate(id: string): Promise<Route | null> {
+    try {
+      const route = await prisma.route.update({
+        where: { id: BigInt(id) },
+        data: { status: 'INACTIVA' }
+      });
+
+      return this.toDomain(route);
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+        return null;
+      }
+
+      throw error;
+    }
+  }
+
   async findAll({ page, perPage }: RoutePaginationParams): Promise<PaginatedRoutes> {
     const skip = (page - 1) * perPage;
     const [routes, total] = await prisma.$transaction([

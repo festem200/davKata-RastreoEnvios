@@ -1,6 +1,7 @@
 import { Router } from 'express';
 
 import { CreateRouteUseCase } from '../../application/use-cases/create-route.use-case.js';
+import { DeleteRouteUseCase } from '../../application/use-cases/delete-route.use-case.js';
 import { ListRoutesUseCase } from '../../application/use-cases/list-routes.use-case.js';
 import { UpdateRouteUseCase } from '../../application/use-cases/update-route.use-case.js';
 import { RoutesController } from '../controllers/routes.controller.js';
@@ -12,10 +13,12 @@ export const createRoutesRouter = (): Router => {
   const listRoutesUseCase = new ListRoutesUseCase(routeRepository);
   const createRouteUseCase = new CreateRouteUseCase(routeRepository);
   const updateRouteUseCase = new UpdateRouteUseCase(routeRepository);
+  const deleteRouteUseCase = new DeleteRouteUseCase(routeRepository);
   const routesController = new RoutesController(
     listRoutesUseCase,
     createRouteUseCase,
-    updateRouteUseCase
+    updateRouteUseCase,
+    deleteRouteUseCase
   );
 
   /**
@@ -78,6 +81,21 @@ export const createRoutesRouter = (): Router => {
    * - 404: Route not found.
    */
   router.put('/:id', routesController.update);
+
+  /**
+   * DELETE /api/routes/:id
+   *
+   * Deactivates a transport route by setting its status to INACTIVA.
+   *
+   * Params:
+   * - id: Positive route identifier.
+   *
+   * Responses:
+   * - 200: Deactivated route.
+   * - 400: Invalid route id.
+   * - 404: Route not found.
+   */
+  router.delete('/:id', routesController.delete);
 
   return router;
 };
