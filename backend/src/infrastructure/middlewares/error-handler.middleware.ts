@@ -1,6 +1,6 @@
 import type { ErrorRequestHandler } from 'express';
 
-import { logger } from '../../utils/logger.js';
+import { logger } from '../helpers/logger/logger.js';
 
 interface HttpParseError extends SyntaxError {
   status?: number;

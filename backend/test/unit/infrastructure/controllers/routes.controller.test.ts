@@ -4,6 +4,7 @@ import { describe, expect, it, jest } from '@jest/globals';
 import { CreateRouteUseCase } from '../../../../src/application/use-cases/create-route.use-case.js';
 import { DeleteRouteUseCase } from '../../../../src/application/use-cases/delete-route.use-case.js';
 import { FilterRoutesUseCase } from '../../../../src/application/use-cases/filter-routes.use-case.js';
+import { GetRouteUseCase } from '../../../../src/application/use-cases/get-route.use-case.js';
 import { ImportRoutesUseCase } from '../../../../src/application/use-cases/import-routes.use-case.js';
 import { ListRoutesUseCase } from '../../../../src/application/use-cases/list-routes.use-case.js';
 import { TrackRouteUseCase } from '../../../../src/application/use-cases/track-route.use-case.js';
@@ -43,6 +44,18 @@ const createRepository = (overrides: Partial<RouteRepository>): RouteRepository 
       total: 0,
       totalPages: 0
     }
+  }),
+  findById: async (id) => ({
+    id,
+    originCity: 'Bogota',
+    destinationCity: 'Cali',
+    distanceKm: 460,
+    estimatedTimeHours: 9.5,
+    vehicleType: 'TRACTOMULA',
+    carrier: 'TCC',
+    costUsd: 520,
+    status: 'ACTIVA',
+    createdAt: '2024-04-29T10:00:00.000Z'
   }),
   create: async (params) => ({
     id: '1',
@@ -89,6 +102,7 @@ const createController = (
 
   return new RoutesController(
     new ListRoutesUseCase(repository),
+    new GetRouteUseCase(repository),
     new CreateRouteUseCase(repository),
     new UpdateRouteUseCase(repository),
     new DeleteRouteUseCase(repository),
@@ -99,6 +113,41 @@ const createController = (
 };
 
 describe('RoutesController', () => {
+  it('returns a route by id', async () => {
+    const controller = createController({
+      findById: async (id) => ({
+        id,
+        originCity: 'Bogota',
+        destinationCity: 'Medellin',
+        distanceKm: 415,
+        estimatedTimeHours: 8.5,
+        vehicleType: 'CAMION',
+        carrier: 'TCC',
+        costUsd: 320,
+        status: 'ACTIVA',
+        createdAt: '2024-01-05T08:00:00.000Z'
+      })
+    });
+    const request = { params: { id: '1' } } as unknown as Request;
+    const response = createResponseMock();
+
+    await controller.getById(request, response);
+
+    expect(response.status).not.toHaveBeenCalled();
+    expect(response.json).toHaveBeenCalledWith({
+      id: '1',
+      originCity: 'Bogota',
+      destinationCity: 'Medellin',
+      distanceKm: 415,
+      estimatedTimeHours: 8.5,
+      vehicleType: 'CAMION',
+      carrier: 'TCC',
+      costUsd: 320,
+      status: 'ACTIVA',
+      createdAt: '2024-01-05T08:00:00.000Z'
+    });
+  });
+
   it('returns paginated routes', async () => {
     const repository: Partial<RouteRepository> = {
       create: async (params) => ({

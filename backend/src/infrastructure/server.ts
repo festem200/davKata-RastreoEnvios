@@ -5,6 +5,7 @@ import { env } from './config/env.js';
 import { correlationIdMiddleware } from './middlewares/correlation-id.middleware.js';
 import { errorHandlerMiddleware } from './middlewares/error-handler.middleware.js';
 import { httpLoggerMiddleware } from './middlewares/http-logger.middleware.js';
+import { createAuthRouter } from './routes/auth.routes.js';
 import { createRoutesRouter } from './routes/routes.routes.js';
 
 export const createServer = () => {
@@ -19,6 +20,7 @@ export const createServer = () => {
     response.json({ status: 'ok' });
   });
 
+  app.use('/api/auth', createAuthRouter());
   app.use('/api/routes', createRoutesRouter());
   app.use(errorHandlerMiddleware);
 
