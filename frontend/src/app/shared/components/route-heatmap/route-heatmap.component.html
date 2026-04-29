@@ -1,0 +1,33 @@
+<article class="heatmap-card">
+  <header>
+    <div>
+      <h2>{{ title() }}</h2>
+      <p>Conteo por ciudad de origen de rutas activas</p>
+    </div>
+    <span>{{ total() }} activas</span>
+  </header>
+
+  <section class="heatmap-grid" aria-label="Mapa de calor de rutas activas por region">
+    @for (item of viewItems(); track item.region) {
+      <article class="heatmap-cell" [attr.data-intensity]="item.intensity">
+        <span>{{ item.label }}</span>
+        <strong>{{ item.activeRoutes }}</strong>
+        <div class="bar" aria-hidden="true">
+          <span [style.width.%]="item.percent * 100"></span>
+        </div>
+      </article>
+    }
+  </section>
+
+  <footer>
+    <span>Baja actividad</span>
+    <div class="legend" aria-hidden="true">
+      <i data-intensity="0"></i>
+      <i data-intensity="1"></i>
+      <i data-intensity="2"></i>
+      <i data-intensity="3"></i>
+      <i data-intensity="4"></i>
+    </div>
+    <span>Alta actividad</span>
+  </footer>
+</article>

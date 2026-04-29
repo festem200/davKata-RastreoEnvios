@@ -41,6 +41,24 @@ const getNumberValue = (value: unknown): number => {
   return numberValue;
 };
 
+type ParsedSoapResponse = {
+  Envelope?: ParsedSoapEnvelope | ParsedSoapEnvelope[];
+};
+
+type ParsedSoapEnvelope = {
+  Body?: {
+    TrackRouteResponse?: Record<string, unknown> | Record<string, unknown>[];
+  };
+};
+
+const asArray = <T>(value: T | T[] | undefined): T[] => {
+  if (!value) {
+    return [];
+  }
+
+  return Array.isArray(value) ? value : [value];
+};
+
 export class SoapTrackingAdapter implements TrackingPort {
   constructor(private readonly trackingSoapUrl: string) {}
 
@@ -91,15 +109,7 @@ export class SoapTrackingAdapter implements TrackingPort {
       throw new InvalidTrackingResponseError();
     }
 
-    const response = (
-      parsed as {
-        Envelope?: {
-          Body?: {
-            TrackRouteResponse?: Record<string, unknown>;
-          };
-        };
-      }
-    ).Envelope?.Body?.TrackRouteResponse;
+    const response = this.findTrackRouteResponse(parsed);
 
     if (!response) {
       throw new InvalidTrackingResponseError();
@@ -112,5 +122,14 @@ export class SoapTrackingAdapter implements TrackingPort {
       etaMinutes: getNumberValue(response.etaMinutes),
       timestamp: getTextValue(response.timestamp)
     };
+  }
+
+  private findTrackRouteResponse(parsed: unknown): Record<string, unknown> | null {
+    const envelopes = asArray((parsed as ParsedSoapResponse).Envelope);
+    const responses = envelopes.flatMap((envelope) =>
+      asArray(envelope.Body?.TrackRouteResponse)
+    );
+
+    return responses.at(-1) ?? null;
   }
 }

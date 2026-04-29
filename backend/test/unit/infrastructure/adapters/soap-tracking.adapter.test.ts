@@ -57,6 +57,47 @@ describe('SoapTrackingAdapter', () => {
     await expect(adapter.trackRoute('1')).rejects.toBeInstanceOf(TrackingServiceUnavailableError);
   });
 
+  it('maps the last tracking response when SOAP returns duplicated envelopes', async () => {
+    const fetchMock = jest.fn<typeof fetch>().mockResolvedValue({
+      ok: true,
+      text: async () => `
+        <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:trac="http://logiscolombia.com/tracking">
+          <soapenv:Body>
+            <trac:TrackRouteResponse>
+              <routeId>1</routeId>
+              <lastLocation>?</lastLocation>
+              <progressPercent>40</progressPercent>
+              <etaMinutes>1</etaMinutes>
+              <timestamp>2026-01-01</timestamp>
+            </trac:TrackRouteResponse>
+          </soapenv:Body>
+        </soapenv:Envelope>
+        <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:trac="http://logiscolombia.com/tracking">
+          <soapenv:Body>
+            <trac:TrackRouteResponse>
+              <routeId>1</routeId>
+              <lastLocation>Lat:4.7110,Lng:-74.0721</lastLocation>
+              <progressPercent>40</progressPercent>
+              <etaMinutes>1</etaMinutes>
+              <timestamp>2026-01-01T10:30:00Z</timestamp>
+            </trac:TrackRouteResponse>
+          </soapenv:Body>
+        </soapenv:Envelope>`
+    } as Response);
+    globalThis.fetch = fetchMock;
+    const adapter = new SoapTrackingAdapter('http://localhost:8088/mockTrackingBinding');
+
+    const tracking = await adapter.trackRoute('1');
+
+    expect(tracking).toEqual({
+      routeId: '1',
+      lastLocation: 'Lat:4.7110,Lng:-74.0721',
+      progressPercent: 40,
+      etaMinutes: 1,
+      timestamp: '2026-01-01T10:30:00Z'
+    });
+  });
+
   it('throws when SOAP response is invalid', async () => {
     globalThis.fetch = jest.fn<typeof fetch>().mockResolvedValue({
       ok: true,
