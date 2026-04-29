@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
-import { ROUTE_NUMERIC_LIMITS, ROUTE_STATUSES } from './create-route-request.dto.js';
+import { ROUTE_STATUSES } from '../../../domain/constants/route-status.js';
+import { ROUTE_NUMERIC_LIMITS } from './create-route-request.dto.js';
 
 const nonEmptyText = (maxLength: number) => z.string().trim().min(1).max(maxLength);
 

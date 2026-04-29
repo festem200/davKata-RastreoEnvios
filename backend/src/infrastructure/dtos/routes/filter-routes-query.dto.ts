@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { ROUTE_STATUSES } from './create-route-request.dto.js';
+import { ROUTE_STATUSES } from '../../../domain/constants/route-status.js';
 import { MAX_ROUTE_PAGE } from './list-routes-query.dto.js';
 
 const optionalText = (maxLength: number) => z.string().trim().min(1).max(maxLength).optional();

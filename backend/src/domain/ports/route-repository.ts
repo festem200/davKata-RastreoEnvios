@@ -15,6 +15,10 @@ export interface UpdateRouteParams extends CreateRouteParams {
   id: string;
 }
 
+export interface ImportRouteParams extends CreateRouteParams {
+  createdAt?: Date;
+}
+
 export interface RoutePaginationParams {
   page: number;
   perPage: number;
@@ -42,6 +46,7 @@ export interface RouteRepository {
   findAll(params: RoutePaginationParams): Promise<PaginatedRoutes>;
   findByFilters(params: RouteFilterParams): Promise<PaginatedRoutes>;
   create(params: CreateRouteParams): Promise<Route>;
+  importMany(params: ImportRouteParams[]): Promise<number>;
   update(params: UpdateRouteParams): Promise<Route | null>;
   deactivate(id: string): Promise<Route | null>;
 }

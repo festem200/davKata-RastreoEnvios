@@ -304,6 +304,119 @@
         }
       }
     },
+    "/api/routes/import": {
+      "post": {
+        "tags": [
+          "Routes"
+        ],
+        "summary": "Importa rutas desde CSV",
+        "description": "Recibe un archivo CSV en multipart/form-data, valida cada fila y persiste solo las filas validas.",
+        "operationId": "importRoutes",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Archivo CSV con columnas del dataset de rutas."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resumen de importacion.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportRoutesResponse"
+                },
+                "examples": {
+                  "partialImport": {
+                    "summary": "Importacion parcial",
+                    "value": {
+                      "imported": 99,
+                      "failed": 1,
+                      "errors": [
+                        {
+                          "row": 42,
+                          "message": "status: Invalid option"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Archivo faltante o CSV invalido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ImportRoutesResponse"
+                    }
+                  ]
+                },
+                "examples": {
+                  "missingFile": {
+                    "summary": "Archivo faltante",
+                    "value": {
+                      "message": "Archivo CSV requerido"
+                    }
+                  },
+                  "invalidCsv": {
+                    "summary": "CSV ilegible",
+                    "value": {
+                      "imported": 0,
+                      "failed": 0,
+                      "errors": [
+                        {
+                          "row": 0,
+                          "message": "CSV invalido: Quote Not Closed"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error inesperado del servidor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "internalError": {
+                    "summary": "Error inesperado",
+                    "value": {
+                      "message": "Error interno del servidor"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/routes/filter": {
       "get": {
         "tags": [
@@ -1044,6 +1157,51 @@
           },
           "pagination": {
             "$ref": "#/components/schemas/Pagination"
+          }
+        }
+      },
+      "ImportRoutesResponse": {
+        "type": "object",
+        "required": [
+          "imported",
+          "failed",
+          "errors"
+        ],
+        "properties": {
+          "imported": {
+            "type": "integer",
+            "minimum": 0,
+            "example": 99
+          },
+          "failed": {
+            "type": "integer",
+            "minimum": 0,
+            "example": 1
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportRouteRowError"
+            }
+          }
+        }
+      },
+      "ImportRouteRowError": {
+        "type": "object",
+        "required": [
+          "row",
+          "message"
+        ],
+        "properties": {
+          "row": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Numero de fila del CSV. Usa 0 para errores globales de parseo.",
+            "example": 42
+          },
+          "message": {
+            "type": "string",
+            "example": "status: Invalid option"
           }
         }
       },

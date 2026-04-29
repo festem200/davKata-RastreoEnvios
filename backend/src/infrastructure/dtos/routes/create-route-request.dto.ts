@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
-const nonEmptyText = (maxLength: number) => z.string().trim().min(1).max(maxLength);
+import { ACTIVE_ROUTE_STATUS, ROUTE_STATUSES } from '../../../domain/constants/route-status.js';
 
-export const ROUTE_STATUSES = ['ACTIVA', 'INACTIVA', 'EN_MANTENIMIENTO', 'SUSPENDIDA'] as const;
+const nonEmptyText = (maxLength: number) => z.string().trim().min(1).max(maxLength);
 
 export const ROUTE_NUMERIC_LIMITS = {
   distanceKm: 99_999_999.99,
@@ -22,7 +22,7 @@ export const createRouteRequestDtoSchema = z.object({
   vehicleType: nonEmptyText(80),
   carrier: nonEmptyText(120),
   costUsd: z.coerce.number().finite().positive().max(ROUTE_NUMERIC_LIMITS.costUsd),
-  status: z.enum(ROUTE_STATUSES).default('ACTIVA')
+  status: z.enum(ROUTE_STATUSES).default(ACTIVE_ROUTE_STATUS)
 });
 
 export type CreateRouteRequestDto = z.infer<typeof createRouteRequestDtoSchema>;

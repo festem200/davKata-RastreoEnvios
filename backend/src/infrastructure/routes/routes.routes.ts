@@ -1,8 +1,10 @@
 import { Router } from 'express';
+import multer from 'multer';
 
 import { CreateRouteUseCase } from '../../application/use-cases/create-route.use-case.js';
 import { DeleteRouteUseCase } from '../../application/use-cases/delete-route.use-case.js';
 import { FilterRoutesUseCase } from '../../application/use-cases/filter-routes.use-case.js';
+import { ImportRoutesUseCase } from '../../application/use-cases/import-routes.use-case.js';
 import { ListRoutesUseCase } from '../../application/use-cases/list-routes.use-case.js';
 import { UpdateRouteUseCase } from '../../application/use-cases/update-route.use-case.js';
 import { RoutesController } from '../controllers/routes.controller.js';
@@ -10,18 +12,21 @@ import { PrismaRouteRepository } from '../repositories/prisma-route.repository.j
 
 export const createRoutesRouter = (): Router => {
   const router = Router();
+  const upload = multer({ storage: multer.memoryStorage() });
   const routeRepository = new PrismaRouteRepository();
   const listRoutesUseCase = new ListRoutesUseCase(routeRepository);
   const createRouteUseCase = new CreateRouteUseCase(routeRepository);
   const updateRouteUseCase = new UpdateRouteUseCase(routeRepository);
   const deleteRouteUseCase = new DeleteRouteUseCase(routeRepository);
   const filterRoutesUseCase = new FilterRoutesUseCase(routeRepository);
+  const importRoutesUseCase = new ImportRoutesUseCase(routeRepository);
   const routesController = new RoutesController(
     listRoutesUseCase,
     createRouteUseCase,
     updateRouteUseCase,
     deleteRouteUseCase,
-    filterRoutesUseCase
+    filterRoutesUseCase,
+    importRoutesUseCase
   );
 
   /**
@@ -79,6 +84,20 @@ export const createRoutesRouter = (): Router => {
    * - 400: Invalid route body.
    */
   router.post('/', routesController.create);
+
+  /**
+   * POST /api/routes/import
+   *
+   * Imports transport routes from a CSV file in multipart/form-data.
+   *
+   * Form data:
+   * - file: CSV file using the dataset columns.
+   *
+   * Responses:
+   * - 200: Import summary.
+   * - 400: Missing or unreadable CSV file.
+   */
+  router.post('/import', upload.single('file'), routesController.import);
 
   /**
    * PUT /api/routes/:id

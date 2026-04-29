@@ -4,6 +4,7 @@ import { RouteNotFoundError } from '../../application/errors/route-not-found.err
 import { CreateRouteUseCase } from '../../application/use-cases/create-route.use-case.js';
 import { DeleteRouteUseCase } from '../../application/use-cases/delete-route.use-case.js';
 import { FilterRoutesUseCase } from '../../application/use-cases/filter-routes.use-case.js';
+import { ImportRoutesUseCase } from '../../application/use-cases/import-routes.use-case.js';
 import {
   ListRoutesUseCase,
   RoutePageNotFoundError
@@ -11,6 +12,11 @@ import {
 import { UpdateRouteUseCase } from '../../application/use-cases/update-route.use-case.js';
 import { createRouteRequestDtoSchema } from '../dtos/routes/create-route-request.dto.js';
 import { filterRoutesQueryDtoSchema } from '../dtos/routes/filter-routes-query.dto.js';
+import {
+  InvalidRoutesCsvError,
+  parseRoutesCsv
+} from '../dtos/routes/import-routes-csv.dto.js';
+import type { ImportRoutesResponseDto } from '../dtos/routes/import-routes-response.dto.js';
 import { listRoutesQueryDtoSchema } from '../dtos/routes/list-routes-query.dto.js';
 import { toListRoutesResponseDto } from '../dtos/routes/list-routes.mapper.js';
 import { routeIdParamDtoSchema } from '../dtos/routes/route-id-param.dto.js';
@@ -23,7 +29,8 @@ export class RoutesController {
     private readonly createRouteUseCase: CreateRouteUseCase,
     private readonly updateRouteUseCase: UpdateRouteUseCase,
     private readonly deleteRouteUseCase: DeleteRouteUseCase,
-    private readonly filterRoutesUseCase: FilterRoutesUseCase
+    private readonly filterRoutesUseCase: FilterRoutesUseCase,
+    private readonly importRoutesUseCase: ImportRoutesUseCase
   ) {}
 
   create = async (request: Request, response: Response): Promise<void> => {
@@ -37,6 +44,36 @@ export class RoutesController {
     const route = await this.createRouteUseCase.execute(parsedBody.data);
 
     response.status(201).json(toRouteResponseDto(route));
+  };
+
+  import = async (request: Request, response: Response): Promise<void> => {
+    if (!request.file) {
+      response.status(400).json({ message: 'Archivo CSV requerido' });
+      return;
+    }
+
+    try {
+      const parsedCsv = parseRoutesCsv(request.file.buffer.toString('utf8'));
+      const imported = await this.importRoutesUseCase.execute(parsedCsv.routes);
+      const result: ImportRoutesResponseDto = {
+        imported,
+        failed: parsedCsv.failed,
+        errors: parsedCsv.errors
+      };
+
+      response.json(result);
+    } catch (error) {
+      if (error instanceof InvalidRoutesCsvError) {
+        response.status(400).json({
+          imported: 0,
+          failed: 0,
+          errors: [{ row: 0, message: `CSV invalido: ${error.message}` }]
+        });
+        return;
+      }
+
+      throw error;
+    }
   };
 
   update = async (request: Request, response: Response): Promise<void> => {

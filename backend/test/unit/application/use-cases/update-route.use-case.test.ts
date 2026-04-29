@@ -30,6 +30,7 @@ describe('UpdateRouteUseCase', () => {
         ...params,
         createdAt: '2024-04-29T10:00:00.000Z'
       }),
+      importMany: async (params) => params.length,
       update: async (params) => ({
         ...params,
         createdAt: '2024-04-29T10:00:00.000Z'
@@ -100,6 +101,7 @@ describe('UpdateRouteUseCase', () => {
         ...params,
         createdAt: '2024-04-29T10:00:00.000Z'
       }),
+      importMany: async (params) => params.length,
       update: async () => null,
       deactivate: async () => null
     };

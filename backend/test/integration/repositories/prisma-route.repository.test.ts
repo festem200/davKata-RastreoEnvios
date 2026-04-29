@@ -168,6 +168,50 @@ describe('PrismaRouteRepository integration', () => {
     });
   });
 
+  it('imports multiple routes', async () => {
+    const repository = new PrismaRouteRepository();
+
+    const result = await repository.importMany([
+      {
+        originCity: 'Ciudad Test Origen Import 1',
+        destinationCity: 'Ciudad Test Destino Import 1',
+        distanceKm: 123.45,
+        estimatedTimeHours: 6.5,
+        vehicleType: 'CAMION_TEST',
+        carrier: TEST_CARRIER,
+        costUsd: 456.78,
+        status: 'ACTIVA',
+        createdAt: TEST_CREATED_AT
+      },
+      {
+        originCity: 'Ciudad Test Origen Import 2',
+        destinationCity: 'Ciudad Test Destino Import 2',
+        distanceKm: 234.56,
+        estimatedTimeHours: 7.5,
+        vehicleType: 'TRACTOMULA_TEST',
+        carrier: TEST_CARRIER,
+        costUsd: 567.89,
+        status: 'SUSPENDIDA',
+        createdAt: TEST_CREATED_AT
+      }
+    ]);
+
+    const total = await prisma.route.count({
+      where: { carrier: TEST_CARRIER }
+    });
+
+    expect(result).toBe(2);
+    expect(total).toBe(2);
+  });
+
+  it('returns zero when importing an empty route list', async () => {
+    const repository = new PrismaRouteRepository();
+
+    const result = await repository.importMany([]);
+
+    expect(result).toBe(0);
+  });
+
   it('updates and maps a route', async () => {
     const repository = new PrismaRouteRepository();
     const createdRoute = await prisma.route.create({

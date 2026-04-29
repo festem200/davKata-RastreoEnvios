@@ -1,6 +1,8 @@
 import type { Route } from '../../domain/entities/route.js';
+import { INACTIVE_ROUTE_STATUS } from '../../domain/constants/route-status.js';
 import type {
   CreateRouteParams,
+  ImportRouteParams,
   PaginatedRoutes,
   RouteFilterParams,
   RoutePaginationParams,
@@ -17,6 +19,18 @@ export class PrismaRouteRepository implements RouteRepository {
     });
 
     return this.toDomain(route);
+  }
+
+  async importMany(params: ImportRouteParams[]): Promise<number> {
+    if (params.length === 0) {
+      return 0;
+    }
+
+    const result = await prisma.route.createMany({
+      data: params
+    });
+
+    return result.count;
   }
 
   async update({ id, ...params }: UpdateRouteParams): Promise<Route | null> {
@@ -40,7 +54,7 @@ export class PrismaRouteRepository implements RouteRepository {
     try {
       const route = await prisma.route.update({
         where: { id: BigInt(id) },
-        data: { status: 'INACTIVA' }
+        data: { status: INACTIVE_ROUTE_STATUS }
       });
 
       return this.toDomain(route);

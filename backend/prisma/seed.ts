@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { parse } from 'csv-parse/sync';
 import { z } from 'zod';
 
+import { ROUTE_STATUSES } from '../src/domain/constants/route-status.js';
 import { prisma } from '../src/infrastructure/database/prisma.js';
 
 const seedDirectory = dirname(fileURLToPath(import.meta.url));
@@ -17,7 +18,7 @@ const routeSeedSchema = z.object({
   vehicleType: z.string().trim().min(1),
   carrier: z.string().trim().min(1),
   costUsd: z.coerce.number().nonnegative(),
-  status: z.enum(['ACTIVA', 'INACTIVA', 'SUSPENDIDA', 'EN_MANTENIMIENTO']),
+  status: z.enum(ROUTE_STATUSES),
   createdAt: z.coerce.date()
 });
 

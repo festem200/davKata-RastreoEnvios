@@ -4,6 +4,7 @@ import { describe, expect, it, jest } from '@jest/globals';
 import { CreateRouteUseCase } from '../../../../src/application/use-cases/create-route.use-case.js';
 import { DeleteRouteUseCase } from '../../../../src/application/use-cases/delete-route.use-case.js';
 import { FilterRoutesUseCase } from '../../../../src/application/use-cases/filter-routes.use-case.js';
+import { ImportRoutesUseCase } from '../../../../src/application/use-cases/import-routes.use-case.js';
 import { ListRoutesUseCase } from '../../../../src/application/use-cases/list-routes.use-case.js';
 import { UpdateRouteUseCase } from '../../../../src/application/use-cases/update-route.use-case.js';
 import type { RouteRepository } from '../../../../src/domain/ports/route-repository.js';
@@ -45,6 +46,7 @@ const createRepository = (overrides: Partial<RouteRepository>): RouteRepository 
     ...params,
     createdAt: '2024-04-29T10:00:00.000Z'
   }),
+  importMany: async (params) => params.length,
   update: async (params) => ({
     ...params,
     createdAt: '2024-04-29T10:00:00.000Z'
@@ -72,7 +74,8 @@ const createController = (repositoryOverrides: Partial<RouteRepository>) => {
     new CreateRouteUseCase(repository),
     new UpdateRouteUseCase(repository),
     new DeleteRouteUseCase(repository),
-    new FilterRoutesUseCase(repository)
+    new FilterRoutesUseCase(repository),
+    new ImportRoutesUseCase(repository)
   );
 };
 
@@ -759,6 +762,83 @@ describe('RoutesController', () => {
         total: 100,
         totalPages: 5
       }
+    });
+  });
+
+  it('imports valid CSV rows and reports invalid rows', async () => {
+    const repository: Partial<RouteRepository> = {
+      importMany: async (params) => params.length
+    };
+    const controller = createController(repository);
+    const csv = [
+      'origin_city,destination_city,distance_km,estimated_time_hours,vehicle_type,carrier,cost_usd,status,created_at',
+      'Bogota,Cali,460,9.5,CAMION,TCC,520,ACTIVA,2024-04-29T10:00:00.000Z',
+      ',Cali,460,9.5,CAMION,TCC,520,ACTIVA,2024-04-29T10:00:00.000Z'
+    ].join('\n');
+    const request = {
+      file: {
+        buffer: Buffer.from(csv)
+      }
+    } as unknown as Request;
+    const response = createResponseMock();
+
+    await controller.import(request, response);
+
+    expect(response.status).not.toHaveBeenCalled();
+    expect(response.json).toHaveBeenCalledWith({
+      imported: 1,
+      failed: 1,
+      errors: [
+        {
+          row: 3,
+          message: expect.stringContaining('originCity')
+        }
+      ]
+    });
+  });
+
+  it('returns 400 when CSV file is missing', async () => {
+    const repository: Partial<RouteRepository> = {
+      importMany: async () => {
+        throw new Error('Repository should not be called');
+      }
+    };
+    const controller = createController(repository);
+    const request = {} as unknown as Request;
+    const response = createResponseMock();
+
+    await controller.import(request, response);
+
+    expect(response.status).toHaveBeenCalledWith(400);
+    expect(response.json).toHaveBeenCalledWith({ message: 'Archivo CSV requerido' });
+  });
+
+  it('returns 400 when CSV cannot be parsed', async () => {
+    const repository: Partial<RouteRepository> = {
+      importMany: async () => {
+        throw new Error('Repository should not be called');
+      }
+    };
+    const controller = createController(repository);
+    const request = {
+      file: {
+        buffer: Buffer.from('"origin_city,destination_city\nBogota,Cali')
+      }
+    } as unknown as Request;
+    const response = createResponseMock();
+
+    await controller.import(request, response);
+
+    expect(response.status).toHaveBeenCalledWith(400);
+    expect(response.json).toHaveBeenCalledWith({
+      imported: 0,
+      failed: 0,
+      errors: [
+        {
+          row: 0,
+          message: expect.stringContaining('CSV invalido')
+        }
+      ]
     });
   });
 });
