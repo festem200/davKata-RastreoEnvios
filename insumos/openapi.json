@@ -1,0 +1,1370 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "davKata Rastreo Envios API",
+    "description": "API backend para administracion de rutas de transporte.",
+    "version": "0.1.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Servidor local de desarrollo"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Health",
+      "description": "Estado del servicio"
+    },
+    {
+      "name": "Routes",
+      "description": "Rutas de transporte"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Consulta el estado del backend",
+        "description": "Permite verificar que el servicio HTTP esta respondiendo.",
+        "operationId": "getHealth",
+        "responses": {
+          "200": {
+            "description": "Servicio disponible.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                },
+                "examples": {
+                  "ok": {
+                    "summary": "Servicio activo",
+                    "value": {
+                      "status": "ok"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/routes": {
+      "get": {
+        "tags": [
+          "Routes"
+        ],
+        "summary": "Lista rutas de transporte",
+        "description": "Retorna rutas de transporte con paginacion fija de 20 registros por pagina.",
+        "operationId": "listRoutes",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Numero de pagina solicitado. Debe ser un entero positivo. Por defecto es 1.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 107374183,
+              "default": 1,
+              "example": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Listado paginado de rutas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedRoutesResponse"
+                },
+                "examples": {
+                  "firstPage": {
+                    "summary": "Primera pagina con resultados",
+                    "value": {
+                      "data": [
+                        {
+                          "id": "1",
+                          "originCity": "Bogota",
+                          "destinationCity": "Medellin",
+                          "distanceKm": 415,
+                          "estimatedTimeHours": 8.5,
+                          "vehicleType": "CAMION",
+                          "carrier": "TCC",
+                          "costUsd": 320,
+                          "status": "ACTIVA",
+                          "createdAt": "2024-01-05T08:00:00.000Z"
+                        },
+                        {
+                          "id": "2",
+                          "originCity": "Medellin",
+                          "destinationCity": "Cali",
+                          "distanceKm": 418,
+                          "estimatedTimeHours": 9,
+                          "vehicleType": "TRACTOMULA",
+                          "carrier": "Servientrega",
+                          "costUsd": 480,
+                          "status": "ACTIVA",
+                          "createdAt": "2024-01-06T09:00:00.000Z"
+                        }
+                      ],
+                      "pagination": {
+                        "page": 1,
+                        "perPage": 20,
+                        "total": 100,
+                        "totalPages": 5
+                      }
+                    }
+                  },
+                  "emptyDatabase": {
+                    "summary": "Base sin rutas cargadas",
+                    "value": {
+                      "data": [],
+                      "pagination": {
+                        "page": 1,
+                        "perPage": 20,
+                        "total": 0,
+                        "totalPages": 0
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Parametro page invalido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "invalidPage": {
+                    "summary": "La pagina no es un entero positivo",
+                    "value": {
+                      "message": "Pagina invalida"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "La pagina solicitada esta fuera del rango disponible.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoutePageNotFoundResponse"
+                },
+                "examples": {
+                  "pageOutOfRange": {
+                    "summary": "Pagina mayor al total de paginas",
+                    "value": {
+                      "message": "Pagina no encontrada",
+                      "pagination": {
+                        "page": 20,
+                        "perPage": 20,
+                        "total": 100,
+                        "totalPages": 5
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error inesperado del servidor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "internalError": {
+                    "summary": "Error inesperado",
+                    "value": {
+                      "message": "Error interno del servidor"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Routes"
+        ],
+        "summary": "Crea una ruta de transporte",
+        "description": "Crea una nueva ruta de transporte validando limites de base de datos y estados permitidos.",
+        "operationId": "createRoute",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRouteRequest"
+              },
+              "examples": {
+                "newRoute": {
+                  "summary": "Ruta valida",
+                  "value": {
+                    "originCity": "Bogota",
+                    "destinationCity": "Medellin",
+                    "distanceKm": 415,
+                    "estimatedTimeHours": 8.5,
+                    "vehicleType": "CAMION",
+                    "carrier": "TCC",
+                    "costUsd": 320,
+                    "status": "ACTIVA"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Ruta creada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Route"
+                },
+                "examples": {
+                  "created": {
+                    "summary": "Ruta creada",
+                    "value": {
+                      "id": "101",
+                      "originCity": "Bogota",
+                      "destinationCity": "Medellin",
+                      "distanceKm": 415,
+                      "estimatedTimeHours": 8.5,
+                      "vehicleType": "CAMION",
+                      "carrier": "TCC",
+                      "costUsd": 320,
+                      "status": "ACTIVA",
+                      "createdAt": "2024-04-29T10:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Body invalido o JSON mal formado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "invalidBody": {
+                    "summary": "Datos de ruta invalidos",
+                    "value": {
+                      "message": "Datos de ruta invalidos"
+                    }
+                  },
+                  "malformedJson": {
+                    "summary": "JSON mal formado",
+                    "value": {
+                      "message": "JSON invalido"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error inesperado del servidor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "internalError": {
+                    "summary": "Error inesperado",
+                    "value": {
+                      "message": "Error interno del servidor"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/routes/import": {
+      "post": {
+        "tags": [
+          "Routes"
+        ],
+        "summary": "Importa rutas desde CSV",
+        "description": "Recibe un archivo CSV en multipart/form-data, valida cada fila y persiste solo las filas validas.",
+        "operationId": "importRoutes",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Archivo CSV con columnas del dataset de rutas."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resumen de importacion.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportRoutesResponse"
+                },
+                "examples": {
+                  "partialImport": {
+                    "summary": "Importacion parcial",
+                    "value": {
+                      "imported": 99,
+                      "failed": 1,
+                      "errors": [
+                        {
+                          "row": 42,
+                          "message": "status: Invalid option"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Archivo faltante o CSV invalido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ImportRoutesResponse"
+                    }
+                  ]
+                },
+                "examples": {
+                  "missingFile": {
+                    "summary": "Archivo faltante",
+                    "value": {
+                      "message": "Archivo CSV requerido"
+                    }
+                  },
+                  "invalidCsv": {
+                    "summary": "CSV ilegible",
+                    "value": {
+                      "imported": 0,
+                      "failed": 0,
+                      "errors": [
+                        {
+                          "row": 0,
+                          "message": "CSV invalido: Quote Not Closed"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error inesperado del servidor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "internalError": {
+                    "summary": "Error inesperado",
+                    "value": {
+                      "message": "Error interno del servidor"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/routes/filter": {
+      "get": {
+        "tags": [
+          "Routes"
+        ],
+        "summary": "Filtra rutas de transporte",
+        "description": "Retorna rutas de transporte filtradas por campos opcionales con paginacion fija de 20 registros por pagina.",
+        "operationId": "filterRoutes",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Numero de pagina solicitado. Debe ser un entero positivo. Por defecto es 1.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 107374183,
+              "default": 1,
+              "example": 1
+            }
+          },
+          {
+            "name": "origin_city",
+            "in": "query",
+            "required": false,
+            "description": "Texto a buscar en la ciudad de origen.",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120,
+              "example": "Bogota"
+            }
+          },
+          {
+            "name": "destination_city",
+            "in": "query",
+            "required": false,
+            "description": "Texto a buscar en la ciudad de destino.",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120,
+              "example": "Cali"
+            }
+          },
+          {
+            "name": "vehicle_type",
+            "in": "query",
+            "required": false,
+            "description": "Texto a buscar en el tipo de vehiculo.",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80,
+              "example": "CAMION"
+            }
+          },
+          {
+            "name": "vehicule_type",
+            "in": "query",
+            "required": false,
+            "deprecated": true,
+            "description": "Alias tolerado para vehicle_type.",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80,
+              "example": "CAMION"
+            }
+          },
+          {
+            "name": "carrier",
+            "in": "query",
+            "required": false,
+            "description": "Texto a buscar en el transportador.",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120,
+              "example": "TCC"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "description": "Estado exacto de la ruta.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVA",
+                "INACTIVA",
+                "EN_MANTENIMIENTO",
+                "SUSPENDIDA"
+              ],
+              "example": "ACTIVA"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Listado paginado de rutas filtradas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedRoutesResponse"
+                },
+                "examples": {
+                  "filteredRoutes": {
+                    "summary": "Rutas filtradas",
+                    "value": {
+                      "data": [
+                        {
+                          "id": "1",
+                          "originCity": "Bogota",
+                          "destinationCity": "Cali",
+                          "distanceKm": 460,
+                          "estimatedTimeHours": 9.5,
+                          "vehicleType": "CAMION",
+                          "carrier": "TCC",
+                          "costUsd": 520,
+                          "status": "ACTIVA",
+                          "createdAt": "2024-04-29T10:00:00.000Z"
+                        }
+                      ],
+                      "pagination": {
+                        "page": 1,
+                        "perPage": 20,
+                        "total": 1,
+                        "totalPages": 1
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Filtros invalidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "invalidFilters": {
+                    "summary": "Filtros invalidos",
+                    "value": {
+                      "message": "Filtros de ruta invalidos"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "La pagina solicitada esta fuera del rango disponible para los filtros aplicados.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoutePageNotFoundResponse"
+                },
+                "examples": {
+                  "pageOutOfRange": {
+                    "summary": "Pagina mayor al total de paginas",
+                    "value": {
+                      "message": "Pagina no encontrada",
+                      "pagination": {
+                        "page": 20,
+                        "perPage": 20,
+                        "total": 100,
+                        "totalPages": 5
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error inesperado del servidor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "internalError": {
+                    "summary": "Error inesperado",
+                    "value": {
+                      "message": "Error interno del servidor"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/routes/tracking/{id}": {
+      "get": {
+        "tags": [
+          "Routes"
+        ],
+        "summary": "Consulta tracking de una ruta",
+        "description": "Consulta el estado de tracking de una ruta a traves del adaptador de tracking.",
+        "operationId": "trackRoute",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Identificador positivo de la ruta.",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1,
+              "maximum": 9223372036854775807,
+              "example": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Informacion de tracking de la ruta.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RouteTrackingResponse"
+                },
+                "examples": {
+                  "tracking": {
+                    "summary": "Tracking disponible",
+                    "value": {
+                      "routeId": "1",
+                      "lastLocation": "Bogota",
+                      "progressPercent": 40,
+                      "etaMinutes": 1,
+                      "timestamp": "2026-01-01"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Id invalido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "invalidId": {
+                    "summary": "Id invalido",
+                    "value": {
+                      "message": "Id de ruta invalido"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Servicio de tracking no disponible o respuesta invalida.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "unavailable": {
+                    "summary": "Servicio no disponible",
+                    "value": {
+                      "message": "Servicio de tracking no disponible"
+                    }
+                  },
+                  "invalidResponse": {
+                    "summary": "Respuesta invalida",
+                    "value": {
+                      "message": "Respuesta de tracking invalida"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error inesperado del servidor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "internalError": {
+                    "summary": "Error inesperado",
+                    "value": {
+                      "message": "Error interno del servidor"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/routes/{id}": {
+        "put": {
+          "tags": [
+            "Routes"
+          ],
+          "summary": "Edita una ruta de transporte",
+          "description": "Actualiza completamente una ruta de transporte existente.",
+          "operationId": "updateRoute",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "description": "Identificador positivo de la ruta.",
+              "schema": {
+                "type": "integer",
+                "format": "int64",
+                "minimum": 1,
+                "maximum": 9223372036854775807,
+                "example": 1
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateRouteRequest"
+                },
+                "examples": {
+                  "updateRoute": {
+                    "summary": "Ruta editada",
+                    "value": {
+                      "originCity": "Bogota",
+                      "destinationCity": "Cali",
+                      "distanceKm": 460,
+                      "estimatedTimeHours": 9.5,
+                      "vehicleType": "TRACTOMULA",
+                      "carrier": "TCC",
+                      "costUsd": 520,
+                      "status": "INACTIVA"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Ruta editada.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Route"
+                  },
+                  "examples": {
+                    "updated": {
+                      "summary": "Ruta editada",
+                      "value": {
+                        "id": "1",
+                        "originCity": "Bogota",
+                        "destinationCity": "Cali",
+                        "distanceKm": 460,
+                        "estimatedTimeHours": 9.5,
+                        "vehicleType": "TRACTOMULA",
+                        "carrier": "TCC",
+                        "costUsd": 520,
+                        "status": "INACTIVA",
+                        "createdAt": "2024-04-29T10:00:00.000Z"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Id, body o JSON invalido.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  },
+                  "examples": {
+                    "invalidId": {
+                      "summary": "Id invalido",
+                      "value": {
+                        "message": "Id de ruta invalido"
+                      }
+                    },
+                    "invalidBody": {
+                      "summary": "Datos de ruta invalidos",
+                      "value": {
+                        "message": "Datos de ruta invalidos"
+                      }
+                    },
+                    "malformedJson": {
+                      "summary": "JSON mal formado",
+                      "value": {
+                        "message": "JSON invalido"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "La ruta no existe.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  },
+                  "examples": {
+                    "routeNotFound": {
+                      "summary": "Ruta no encontrada",
+                      "value": {
+                        "message": "Ruta no encontrada"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Error inesperado del servidor.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  },
+                  "examples": {
+                    "internalError": {
+                      "summary": "Error inesperado",
+                      "value": {
+                        "message": "Error interno del servidor"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "delete": {
+          "tags": [
+            "Routes"
+          ],
+          "summary": "Desactiva una ruta de transporte",
+          "description": "Realiza una baja logica de la ruta cambiando su estado a INACTIVA.",
+          "operationId": "deleteRoute",
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "required": true,
+              "description": "Identificador positivo de la ruta.",
+              "schema": {
+                "type": "integer",
+                "format": "int64",
+                "minimum": 1,
+                "maximum": 9223372036854775807,
+                "example": 1
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Ruta desactivada.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/Route"
+                  },
+                  "examples": {
+                    "deactivated": {
+                      "summary": "Ruta desactivada",
+                      "value": {
+                        "id": "1",
+                        "originCity": "Bogota",
+                        "destinationCity": "Cali",
+                        "distanceKm": 460,
+                        "estimatedTimeHours": 9.5,
+                        "vehicleType": "TRACTOMULA",
+                        "carrier": "TCC",
+                        "costUsd": 520,
+                        "status": "INACTIVA",
+                        "createdAt": "2024-04-29T10:00:00.000Z"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Id invalido.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  },
+                  "examples": {
+                    "invalidId": {
+                      "summary": "Id invalido",
+                      "value": {
+                        "message": "Id de ruta invalido"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "La ruta no existe.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  },
+                  "examples": {
+                    "routeNotFound": {
+                      "summary": "Ruta no encontrada",
+                      "value": {
+                        "message": "Ruta no encontrada"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Error inesperado del servidor.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  },
+                  "examples": {
+                    "internalError": {
+                      "summary": "Error inesperado",
+                      "value": {
+                        "message": "Error interno del servidor"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+  },
+  "components": {
+    "schemas": {
+      "HealthResponse": {
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "ok"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Pagina invalida"
+          }
+        }
+      },
+      "Pagination": {
+        "type": "object",
+        "required": [
+          "page",
+          "perPage",
+          "total",
+          "totalPages"
+        ],
+        "properties": {
+          "page": {
+            "type": "integer",
+            "minimum": 1,
+            "example": 1
+          },
+          "perPage": {
+            "type": "integer",
+            "minimum": 1,
+            "example": 20
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0,
+            "example": 100
+          },
+          "totalPages": {
+            "type": "integer",
+            "minimum": 0,
+            "example": 5
+          }
+        }
+      },
+      "Route": {
+        "type": "object",
+        "required": [
+          "id",
+          "originCity",
+          "destinationCity",
+          "distanceKm",
+          "estimatedTimeHours",
+          "vehicleType",
+          "carrier",
+          "costUsd",
+          "status",
+          "createdAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identificador de la ruta. Se serializa como string porque en base de datos es BigInt.",
+            "example": "1"
+          },
+          "originCity": {
+            "type": "string",
+            "maxLength": 120,
+            "example": "Bogota"
+          },
+          "destinationCity": {
+            "type": "string",
+            "maxLength": 120,
+            "example": "Medellin"
+          },
+          "distanceKm": {
+            "type": "number",
+            "format": "double",
+            "maximum": 99999999.99,
+            "example": 415
+          },
+          "estimatedTimeHours": {
+            "type": "number",
+            "format": "double",
+            "maximum": 999999.99,
+            "example": 8.5
+          },
+          "vehicleType": {
+            "type": "string",
+            "maxLength": 80,
+            "example": "CAMION"
+          },
+          "carrier": {
+            "type": "string",
+            "maxLength": 120,
+            "example": "TCC"
+          },
+          "costUsd": {
+            "type": "number",
+            "format": "double",
+            "maximum": 9999999999.99,
+            "example": 320
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVA",
+              "INACTIVA",
+              "EN_MANTENIMIENTO",
+              "SUSPENDIDA"
+            ],
+            "example": "ACTIVA"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-05T08:00:00.000Z"
+          }
+        }
+      },
+      "CreateRouteRequest": {
+        "type": "object",
+        "required": [
+          "originCity",
+          "destinationCity",
+          "distanceKm",
+          "estimatedTimeHours",
+          "vehicleType",
+          "carrier",
+          "costUsd"
+        ],
+        "properties": {
+          "originCity": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120,
+            "example": "Bogota"
+          },
+          "destinationCity": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120,
+            "example": "Medellin"
+          },
+          "distanceKm": {
+            "type": "number",
+            "format": "double",
+            "exclusiveMinimum": 0,
+            "maximum": 99999999.99,
+            "example": 415
+          },
+          "estimatedTimeHours": {
+            "type": "number",
+            "format": "double",
+            "exclusiveMinimum": 0,
+            "maximum": 999999.99,
+            "example": 8.5
+          },
+          "vehicleType": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80,
+            "example": "CAMION"
+          },
+          "carrier": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120,
+            "example": "TCC"
+          },
+          "costUsd": {
+            "type": "number",
+            "format": "double",
+            "exclusiveMinimum": 0,
+            "maximum": 9999999999.99,
+            "example": 320
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVA",
+              "INACTIVA",
+              "EN_MANTENIMIENTO",
+              "SUSPENDIDA"
+            ],
+            "default": "ACTIVA",
+            "example": "ACTIVA"
+          }
+        }
+      },
+      "UpdateRouteRequest": {
+        "type": "object",
+        "required": [
+          "originCity",
+          "destinationCity",
+          "distanceKm",
+          "estimatedTimeHours",
+          "vehicleType",
+          "carrier",
+          "costUsd",
+          "status"
+        ],
+        "properties": {
+          "originCity": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120,
+            "example": "Bogota"
+          },
+          "destinationCity": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120,
+            "example": "Cali"
+          },
+          "distanceKm": {
+            "type": "number",
+            "format": "double",
+            "exclusiveMinimum": 0,
+            "maximum": 99999999.99,
+            "example": 460
+          },
+          "estimatedTimeHours": {
+            "type": "number",
+            "format": "double",
+            "exclusiveMinimum": 0,
+            "maximum": 999999.99,
+            "example": 9.5
+          },
+          "vehicleType": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80,
+            "example": "TRACTOMULA"
+          },
+          "carrier": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120,
+            "example": "TCC"
+          },
+          "costUsd": {
+            "type": "number",
+            "format": "double",
+            "exclusiveMinimum": 0,
+            "maximum": 9999999999.99,
+            "example": 520
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVA",
+              "INACTIVA",
+              "EN_MANTENIMIENTO",
+              "SUSPENDIDA"
+            ],
+            "example": "INACTIVA"
+          }
+        }
+      },
+      "PaginatedRoutesResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "pagination"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Route"
+            }
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/Pagination"
+          }
+        }
+      },
+      "ImportRoutesResponse": {
+        "type": "object",
+        "required": [
+          "imported",
+          "failed",
+          "errors"
+        ],
+        "properties": {
+          "imported": {
+            "type": "integer",
+            "minimum": 0,
+            "example": 99
+          },
+          "failed": {
+            "type": "integer",
+            "minimum": 0,
+            "example": 1
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportRouteRowError"
+            }
+          }
+        }
+      },
+      "ImportRouteRowError": {
+        "type": "object",
+        "required": [
+          "row",
+          "message"
+        ],
+        "properties": {
+          "row": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Numero de fila del CSV. Usa 0 para errores globales de parseo.",
+            "example": 42
+          },
+          "message": {
+            "type": "string",
+            "example": "status: Invalid option"
+          }
+        }
+      },
+      "RouteTrackingResponse": {
+        "type": "object",
+        "required": [
+          "routeId",
+          "lastLocation",
+          "progressPercent",
+          "etaMinutes",
+          "timestamp"
+        ],
+        "properties": {
+          "routeId": {
+            "type": "string",
+            "example": "1"
+          },
+          "lastLocation": {
+            "type": "string",
+            "example": "Bogota"
+          },
+          "progressPercent": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "example": 40
+          },
+          "etaMinutes": {
+            "type": "number",
+            "minimum": 0,
+            "example": 1
+          },
+          "timestamp": {
+            "type": "string",
+            "example": "2026-01-01"
+          }
+        }
+      },
+      "RoutePageNotFoundResponse": {
+        "type": "object",
+        "required": [
+          "message",
+          "pagination"
+        ],
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Pagina no encontrada"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/Pagination"
+          }
+        }
+      }
+    }
+  }
+}

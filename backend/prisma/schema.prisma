@@ -33,24 +33,3 @@ model User {
 
   @@map("user")
 }
-
-model Shipment {
-  id                BigInt          @id @default(autoincrement())
-  trackingNumber    String          @unique @map("tracking_number") @db.VarChar(40)
-  recipient         String          @db.VarChar(160)
-  origin            String          @db.VarChar(160)
-  destination       String          @db.VarChar(160)
-  status            ShipmentStatus
-  estimatedDelivery DateTime        @map("estimated_delivery") @db.Date
-  createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamp(6)
-  updatedAt         DateTime        @default(now()) @map("updated_at") @db.Timestamp(6)
-
-  @@map("shipment")
-}
-
-enum ShipmentStatus {
-  ACTIVA
-  INACTIVA
-  SUSPENDIDA
-  EN_MANTENIMIENTO
-}
