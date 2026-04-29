@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import bcrypt from 'bcrypt';
 import { parse } from 'csv-parse/sync';
 import { z } from 'zod';
 
@@ -9,6 +10,11 @@ import { prisma } from '../src/infrastructure/database/prisma.js';
 
 const seedDirectory = dirname(fileURLToPath(import.meta.url));
 const routesCsvPath = join(seedDirectory, 'seed-data', 'routes_dataset.csv');
+const ADMIN_EMAIL = 'admin@test.com';
+const ADMIN_PASSWORD = '123456';
+const BCRYPT_COST_FACTOR = 12;
+const OPERATOR_EMAIL = 'operador@test.com';
+const OPERATOR_PASSWORD = '123456';
 
 const routeSeedSchema = z.object({
   originCity: z.string().trim().min(1),
@@ -85,8 +91,52 @@ const seedRoutesFromCsv = async () => {
   console.log(`Seeded ${routes.length} routes from ${routesCsvPath}`);
 };
 
+const seedAdminUser = async () => {
+  const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, BCRYPT_COST_FACTOR);
+
+  await prisma.user.upsert({
+    where: { email: ADMIN_EMAIL },
+    create: {
+      email: ADMIN_EMAIL,
+      passwordHash,
+      role: 'ADMIN'
+    },
+    update: {
+      passwordHash,
+      role: 'ADMIN',
+      isActive: true,
+      updatedAt: new Date()
+    }
+  });
+
+  console.log(`Seeded admin user ${ADMIN_EMAIL} with bcrypt cost factor ${BCRYPT_COST_FACTOR}`);
+};
+
+const seedOperatorUser = async () => {
+  const passwordHash = await bcrypt.hash(OPERATOR_PASSWORD, BCRYPT_COST_FACTOR);
+
+  await prisma.user.upsert({
+    where: { email: OPERATOR_EMAIL },
+    create: {
+      email: OPERATOR_EMAIL,
+      passwordHash,
+      role: 'OPERADOR'
+    },
+    update: {
+      passwordHash,
+      role: 'OPERADOR',
+      isActive: true,
+      updatedAt: new Date()
+    }
+  });
+
+  console.log(`Seeded operator user ${OPERATOR_EMAIL} with bcrypt cost factor ${BCRYPT_COST_FACTOR}`);
+};
+
 try {
   await seedRoutesFromCsv();
+  await seedAdminUser();
+  await seedOperatorUser();
 } finally {
   await prisma.$disconnect();
 }

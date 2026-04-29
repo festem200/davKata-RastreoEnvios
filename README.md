@@ -78,6 +78,7 @@ cp backend/.env.example backend/.env
 ```
 
 Las credenciales y `DATABASE_URL` se configuran en esos archivos `.env`, no en el codigo.
+El backend tambien requiere `JWT_SECRET` para firmar tokens de autenticacion.
 
 Levantar PostgreSQL:
 
@@ -113,6 +114,9 @@ npm --workspace backend run db:setup
 ```
 
 Ese comando genera el cliente Prisma y carga la data inicial.
+La semilla crea el usuario administrador `admin@test.com` con password `123456`
+y el usuario operador `operador@test.com` con password `123456`.
+La password se almacena hasheada con bcrypt usando cost factor `12`.
 
 Comandos Prisma por separado:
 
@@ -181,6 +185,48 @@ URLs locales:
 - Frontend: `http://localhost:4200`
 - Backend: `http://localhost:3000`
 - Salud backend: `http://localhost:3000/health`
+
+## Autenticacion y autorizacion
+
+El endpoint publico de login es:
+
+```http
+POST /api/auth/login
+Content-Type: application/json
+```
+
+Body:
+
+```json
+{
+  "email": "admin@test.com",
+  "password": "123456"
+}
+```
+
+Respuesta:
+
+```json
+{
+  "accessToken": "...",
+  "expiresIn": "8h",
+  "user": {
+    "id": 1,
+    "role": "ADMIN"
+  }
+}
+```
+
+Las rutas privadas bajo `/api/routes` requieren el header:
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+Politica de roles:
+
+- `ADMIN`: acceso total a rutas, filtros, tracking, creacion, importacion CSV, actualizacion y desactivacion.
+- `OPERADOR`: `GET /api/routes` y `GET /api/routes/:id`.
 
 ### Logs estructurados del backend
 

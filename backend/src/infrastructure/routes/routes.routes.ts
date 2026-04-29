@@ -4,6 +4,7 @@ import multer from 'multer';
 import { CreateRouteUseCase } from '../../application/use-cases/create-route.use-case.js';
 import { DeleteRouteUseCase } from '../../application/use-cases/delete-route.use-case.js';
 import { FilterRoutesUseCase } from '../../application/use-cases/filter-routes.use-case.js';
+import { GetRouteUseCase } from '../../application/use-cases/get-route.use-case.js';
 import { ImportRoutesUseCase } from '../../application/use-cases/import-routes.use-case.js';
 import { ListRoutesUseCase } from '../../application/use-cases/list-routes.use-case.js';
 import { TrackRouteUseCase } from '../../application/use-cases/track-route.use-case.js';
@@ -12,6 +13,8 @@ import { env } from '../config/env.js';
 import { CachedTrackingAdapter } from '../adapters/cached-tracking.adapter.js';
 import { SoapTrackingAdapter } from '../adapters/soap-tracking.adapter.js';
 import { RoutesController } from '../controllers/routes.controller.js';
+import { authMiddleware } from '../middlewares/auth.middleware.js';
+import { roleMiddleware } from '../middlewares/role.middleware.js';
 import { PrismaRouteRepository } from '../repositories/prisma-route.repository.js';
 
 export const createRoutesRouter = (): Router => {
@@ -20,6 +23,7 @@ export const createRoutesRouter = (): Router => {
   const routeRepository = new PrismaRouteRepository();
   const trackingAdapter = new CachedTrackingAdapter(new SoapTrackingAdapter(env.trackingSoapUrl));
   const listRoutesUseCase = new ListRoutesUseCase(routeRepository);
+  const getRouteUseCase = new GetRouteUseCase(routeRepository);
   const createRouteUseCase = new CreateRouteUseCase(routeRepository);
   const updateRouteUseCase = new UpdateRouteUseCase(routeRepository);
   const deleteRouteUseCase = new DeleteRouteUseCase(routeRepository);
@@ -28,6 +32,7 @@ export const createRoutesRouter = (): Router => {
   const trackRouteUseCase = new TrackRouteUseCase(trackingAdapter);
   const routesController = new RoutesController(
     listRoutesUseCase,
+    getRouteUseCase,
     createRouteUseCase,
     updateRouteUseCase,
     deleteRouteUseCase,
@@ -35,6 +40,8 @@ export const createRoutesRouter = (): Router => {
     importRoutesUseCase,
     trackRouteUseCase
   );
+
+  router.use(authMiddleware);
 
   /**
    * GET /api/routes
@@ -49,7 +56,7 @@ export const createRoutesRouter = (): Router => {
    * - 400: Invalid page query parameter.
    * - 404: Requested page is outside the available pagination range.
    */
-  router.get('/', routesController.list);
+  router.get('/', roleMiddleware('ADMIN', 'OPERADOR'), routesController.list);
 
   /**
    * GET /api/routes/filter
@@ -69,7 +76,7 @@ export const createRoutesRouter = (): Router => {
    * - 400: Invalid filters.
    * - 404: Requested page is outside the available pagination range.
    */
-  router.get('/filter', routesController.filter);
+  router.get('/filter', roleMiddleware('ADMIN'), routesController.filter);
 
   /**
    * GET /api/routes/tracking/:id
@@ -84,7 +91,22 @@ export const createRoutesRouter = (): Router => {
    * - 400: Invalid route id.
    * - 502: Tracking service unavailable or invalid response.
    */
-  router.get('/tracking/:id', routesController.track);
+  router.get('/tracking/:id', roleMiddleware('ADMIN'), routesController.track);
+
+  /**
+   * GET /api/routes/:id
+   *
+   * Gets a transport route by id.
+   *
+   * Params:
+   * - id: Positive route identifier.
+   *
+   * Responses:
+   * - 200: Route detail.
+   * - 400: Invalid route id.
+   * - 404: Route not found.
+   */
+  router.get('/:id', roleMiddleware('ADMIN', 'OPERADOR'), routesController.getById);
 
   /**
    * POST /api/routes
@@ -105,7 +127,7 @@ export const createRoutesRouter = (): Router => {
    * - 201: Created route.
    * - 400: Invalid route body.
    */
-  router.post('/', routesController.create);
+  router.post('/', roleMiddleware('ADMIN'), routesController.create);
 
   /**
    * POST /api/routes/import
@@ -119,7 +141,7 @@ export const createRoutesRouter = (): Router => {
    * - 200: Import summary.
    * - 400: Missing or unreadable CSV file.
    */
-  router.post('/import', upload.single('file'), routesController.import);
+  router.post('/import', roleMiddleware('ADMIN'), upload.single('file'), routesController.import);
 
   /**
    * PUT /api/routes/:id
@@ -144,7 +166,7 @@ export const createRoutesRouter = (): Router => {
    * - 400: Invalid route id or body.
    * - 404: Route not found.
    */
-  router.put('/:id', routesController.update);
+  router.put('/:id', roleMiddleware('ADMIN'), routesController.update);
 
   /**
    * DELETE /api/routes/:id
@@ -159,7 +181,7 @@ export const createRoutesRouter = (): Router => {
    * - 400: Invalid route id.
    * - 404: Route not found.
    */
-  router.delete('/:id', routesController.delete);
+  router.delete('/:id', roleMiddleware('ADMIN'), routesController.delete);
 
   return router;
 };

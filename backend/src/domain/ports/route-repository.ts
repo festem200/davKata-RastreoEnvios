@@ -44,6 +44,7 @@ export interface PaginatedRoutes {
 
 export interface RouteRepository {
   findAll(params: RoutePaginationParams): Promise<PaginatedRoutes>;
+  findById(id: string): Promise<Route | null>;
   findByFilters(params: RouteFilterParams): Promise<PaginatedRoutes>;
   create(params: CreateRouteParams): Promise<Route>;
   importMany(params: ImportRouteParams[]): Promise<number>;

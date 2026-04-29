@@ -4,6 +4,7 @@ import { RouteNotFoundError } from '../../application/errors/route-not-found.err
 import { CreateRouteUseCase } from '../../application/use-cases/create-route.use-case.js';
 import { DeleteRouteUseCase } from '../../application/use-cases/delete-route.use-case.js';
 import { FilterRoutesUseCase } from '../../application/use-cases/filter-routes.use-case.js';
+import { GetRouteUseCase } from '../../application/use-cases/get-route.use-case.js';
 import { ImportRoutesUseCase } from '../../application/use-cases/import-routes.use-case.js';
 import {
   ListRoutesUseCase,
@@ -32,6 +33,7 @@ import { updateRouteRequestDtoSchema } from '../dtos/routes/update-route-request
 export class RoutesController {
   constructor(
     private readonly listRoutesUseCase: ListRoutesUseCase,
+    private readonly getRouteUseCase: GetRouteUseCase,
     private readonly createRouteUseCase: CreateRouteUseCase,
     private readonly updateRouteUseCase: UpdateRouteUseCase,
     private readonly deleteRouteUseCase: DeleteRouteUseCase,
@@ -51,6 +53,28 @@ export class RoutesController {
     const route = await this.createRouteUseCase.execute(parsedBody.data);
 
     response.status(201).json(toRouteResponseDto(route));
+  };
+
+  getById = async (request: Request, response: Response): Promise<void> => {
+    const parsedParams = routeIdParamDtoSchema.safeParse(request.params);
+
+    if (!parsedParams.success) {
+      response.status(400).json({ message: 'Id de ruta invalido' });
+      return;
+    }
+
+    try {
+      const route = await this.getRouteUseCase.execute(parsedParams.data.id);
+
+      response.json(toRouteResponseDto(route));
+    } catch (error) {
+      if (error instanceof RouteNotFoundError) {
+        response.status(404).json({ message: error.message });
+        return;
+      }
+
+      throw error;
+    }
   };
 
   import = async (request: Request, response: Response): Promise<void> => {

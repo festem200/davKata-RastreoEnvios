@@ -89,6 +89,14 @@ export class PrismaRouteRepository implements RouteRepository {
     };
   }
 
+  async findById(id: string): Promise<Route | null> {
+    const route = await prisma.route.findUnique({
+      where: { id: BigInt(id) }
+    });
+
+    return route ? this.toDomain(route) : null;
+  }
+
   async findByFilters({
     page,
     perPage,
