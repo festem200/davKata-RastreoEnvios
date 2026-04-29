@@ -2,6 +2,7 @@ import { Router } from 'express';
 
 import { CreateRouteUseCase } from '../../application/use-cases/create-route.use-case.js';
 import { DeleteRouteUseCase } from '../../application/use-cases/delete-route.use-case.js';
+import { FilterRoutesUseCase } from '../../application/use-cases/filter-routes.use-case.js';
 import { ListRoutesUseCase } from '../../application/use-cases/list-routes.use-case.js';
 import { UpdateRouteUseCase } from '../../application/use-cases/update-route.use-case.js';
 import { RoutesController } from '../controllers/routes.controller.js';
@@ -14,11 +15,13 @@ export const createRoutesRouter = (): Router => {
   const createRouteUseCase = new CreateRouteUseCase(routeRepository);
   const updateRouteUseCase = new UpdateRouteUseCase(routeRepository);
   const deleteRouteUseCase = new DeleteRouteUseCase(routeRepository);
+  const filterRoutesUseCase = new FilterRoutesUseCase(routeRepository);
   const routesController = new RoutesController(
     listRoutesUseCase,
     createRouteUseCase,
     updateRouteUseCase,
-    deleteRouteUseCase
+    deleteRouteUseCase,
+    filterRoutesUseCase
   );
 
   /**
@@ -35,6 +38,26 @@ export const createRoutesRouter = (): Router => {
    * - 404: Requested page is outside the available pagination range.
    */
   router.get('/', routesController.list);
+
+  /**
+   * GET /api/routes/filter
+   *
+   * Lists transport routes filtered by optional route fields.
+   *
+   * Query params:
+   * - page: Positive integer page number. Defaults to 1.
+   * - origin_city: Optional origin city text.
+   * - destination_city: Optional destination city text.
+   * - vehicle_type: Optional vehicle type text.
+   * - carrier: Optional carrier text.
+   * - status: Optional supported route status.
+   *
+   * Responses:
+   * - 200: Paginated filtered route list.
+   * - 400: Invalid filters.
+   * - 404: Requested page is outside the available pagination range.
+   */
+  router.get('/filter', routesController.filter);
 
   /**
    * POST /api/routes

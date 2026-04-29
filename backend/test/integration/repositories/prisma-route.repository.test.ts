@@ -73,6 +73,69 @@ describe('PrismaRouteRepository integration', () => {
     });
   });
 
+  it('filters routes and returns pagination metadata', async () => {
+    const repository = new PrismaRouteRepository();
+    const matchingRoute = await prisma.route.create({
+      data: {
+        originCity: 'Ciudad Test Origen Filtro',
+        destinationCity: 'Ciudad Test Destino Filtro',
+        distanceKm: 123.45,
+        estimatedTimeHours: 6.5,
+        vehicleType: 'CAMION_TEST',
+        carrier: TEST_CARRIER,
+        costUsd: 456.78,
+        status: 'ACTIVA',
+        createdAt: TEST_CREATED_AT
+      }
+    });
+    await prisma.route.create({
+      data: {
+        originCity: 'Ciudad Test Origen Alterna',
+        destinationCity: 'Ciudad Test Destino Alterna',
+        distanceKm: 234.56,
+        estimatedTimeHours: 7.5,
+        vehicleType: 'TRACTOMULA_TEST',
+        carrier: TEST_CARRIER,
+        costUsd: 567.89,
+        status: 'INACTIVA',
+        createdAt: TEST_CREATED_AT
+      }
+    });
+
+    const result = await repository.findByFilters({
+      page: 1,
+      perPage: 20,
+      originCity: 'origen filtro',
+      destinationCity: 'destino filtro',
+      vehicleType: 'camion',
+      carrier: TEST_CARRIER,
+      status: 'ACTIVA'
+    });
+
+    expect(result).toEqual({
+      data: [
+        {
+          id: matchingRoute.id.toString(),
+          originCity: 'Ciudad Test Origen Filtro',
+          destinationCity: 'Ciudad Test Destino Filtro',
+          distanceKm: 123.45,
+          estimatedTimeHours: 6.5,
+          vehicleType: 'CAMION_TEST',
+          carrier: TEST_CARRIER,
+          costUsd: 456.78,
+          status: 'ACTIVA',
+          createdAt: TEST_CREATED_AT.toISOString()
+        }
+      ],
+      pagination: {
+        page: 1,
+        perPage: 20,
+        total: 1,
+        totalPages: 1
+      }
+    });
+  });
+
   it('creates and maps a route', async () => {
     const repository = new PrismaRouteRepository();
 

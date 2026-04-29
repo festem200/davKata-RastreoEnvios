@@ -14,6 +14,15 @@ describe('ListRoutesUseCase', () => {
         ...params,
         createdAt: '2024-04-29T10:00:00.000Z'
       }),
+      findByFilters: async () => ({
+        data: [],
+        pagination: {
+          page: 1,
+          perPage: 20,
+          total: 0,
+          totalPages: 0
+        }
+      }),
       update: async (params) => ({
         ...params,
         createdAt: '2024-04-29T10:00:00.000Z'
@@ -58,6 +67,15 @@ describe('ListRoutesUseCase', () => {
         id: '1',
         ...params,
         createdAt: '2024-04-29T10:00:00.000Z'
+      }),
+      findByFilters: async () => ({
+        data: [],
+        pagination: {
+          page: 1,
+          perPage: 20,
+          total: 0,
+          totalPages: 0
+        }
       }),
       update: async (params) => ({
         ...params,

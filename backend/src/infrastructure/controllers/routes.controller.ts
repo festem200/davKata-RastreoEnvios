@@ -3,12 +3,14 @@ import type { Request, Response } from 'express';
 import { RouteNotFoundError } from '../../application/errors/route-not-found.error.js';
 import { CreateRouteUseCase } from '../../application/use-cases/create-route.use-case.js';
 import { DeleteRouteUseCase } from '../../application/use-cases/delete-route.use-case.js';
+import { FilterRoutesUseCase } from '../../application/use-cases/filter-routes.use-case.js';
 import {
   ListRoutesUseCase,
   RoutePageNotFoundError
 } from '../../application/use-cases/list-routes.use-case.js';
 import { UpdateRouteUseCase } from '../../application/use-cases/update-route.use-case.js';
 import { createRouteRequestDtoSchema } from '../dtos/routes/create-route-request.dto.js';
+import { filterRoutesQueryDtoSchema } from '../dtos/routes/filter-routes-query.dto.js';
 import { listRoutesQueryDtoSchema } from '../dtos/routes/list-routes-query.dto.js';
 import { toListRoutesResponseDto } from '../dtos/routes/list-routes.mapper.js';
 import { routeIdParamDtoSchema } from '../dtos/routes/route-id-param.dto.js';
@@ -20,7 +22,8 @@ export class RoutesController {
     private readonly listRoutesUseCase: ListRoutesUseCase,
     private readonly createRouteUseCase: CreateRouteUseCase,
     private readonly updateRouteUseCase: UpdateRouteUseCase,
-    private readonly deleteRouteUseCase: DeleteRouteUseCase
+    private readonly deleteRouteUseCase: DeleteRouteUseCase,
+    private readonly filterRoutesUseCase: FilterRoutesUseCase
   ) {}
 
   create = async (request: Request, response: Response): Promise<void> => {
@@ -100,6 +103,31 @@ export class RoutesController {
 
     try {
       const routes = await this.listRoutesUseCase.execute(parsedQuery.data.page);
+
+      response.json(toListRoutesResponseDto(routes));
+    } catch (error) {
+      if (error instanceof RoutePageNotFoundError) {
+        response.status(404).json({
+          message: error.message,
+          pagination: error.pagination
+        });
+        return;
+      }
+
+      throw error;
+    }
+  };
+
+  filter = async (request: Request, response: Response): Promise<void> => {
+    const parsedQuery = filterRoutesQueryDtoSchema.safeParse(request.query);
+
+    if (!parsedQuery.success) {
+      response.status(400).json({ message: 'Filtros de ruta invalidos' });
+      return;
+    }
+
+    try {
+      const routes = await this.filterRoutesUseCase.execute(parsedQuery.data);
 
       response.json(toListRoutesResponseDto(routes));
     } catch (error) {

@@ -2,6 +2,7 @@ import type { Route } from '../../domain/entities/route.js';
 import type {
   CreateRouteParams,
   PaginatedRoutes,
+  RouteFilterParams,
   RoutePaginationParams,
   RouteRepository,
   UpdateRouteParams
@@ -61,6 +62,46 @@ export class PrismaRouteRepository implements RouteRepository {
         orderBy: { id: 'asc' }
       }),
       prisma.route.count()
+    ]);
+
+    return {
+      data: routes.map((route) => this.toDomain(route)),
+      pagination: {
+        page,
+        perPage,
+        total,
+        totalPages: Math.ceil(total / perPage)
+      }
+    };
+  }
+
+  async findByFilters({
+    page,
+    perPage,
+    originCity,
+    destinationCity,
+    vehicleType,
+    carrier,
+    status
+  }: RouteFilterParams): Promise<PaginatedRoutes> {
+    const skip = (page - 1) * perPage;
+    const where: Prisma.RouteWhereInput = {
+      ...(originCity ? { originCity: { contains: originCity, mode: 'insensitive' } } : {}),
+      ...(destinationCity
+        ? { destinationCity: { contains: destinationCity, mode: 'insensitive' } }
+        : {}),
+      ...(vehicleType ? { vehicleType: { contains: vehicleType, mode: 'insensitive' } } : {}),
+      ...(carrier ? { carrier: { contains: carrier, mode: 'insensitive' } } : {}),
+      ...(status ? { status } : {})
+    };
+    const [routes, total] = await prisma.$transaction([
+      prisma.route.findMany({
+        where,
+        skip,
+        take: perPage,
+        orderBy: { id: 'asc' }
+      }),
+      prisma.route.count({ where })
     ]);
 
     return {

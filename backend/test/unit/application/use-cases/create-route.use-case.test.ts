@@ -15,6 +15,15 @@ describe('CreateRouteUseCase', () => {
           totalPages: 0
         }
       }),
+      findByFilters: async () => ({
+        data: [],
+        pagination: {
+          page: 1,
+          perPage: 20,
+          total: 0,
+          totalPages: 0
+        }
+      }),
       create: async (params) => ({
         id: '1',
         ...params,

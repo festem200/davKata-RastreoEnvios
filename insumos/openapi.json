@@ -304,6 +304,207 @@
         }
       }
     },
+    "/api/routes/filter": {
+      "get": {
+        "tags": [
+          "Routes"
+        ],
+        "summary": "Filtra rutas de transporte",
+        "description": "Retorna rutas de transporte filtradas por campos opcionales con paginacion fija de 20 registros por pagina.",
+        "operationId": "filterRoutes",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Numero de pagina solicitado. Debe ser un entero positivo. Por defecto es 1.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 107374183,
+              "default": 1,
+              "example": 1
+            }
+          },
+          {
+            "name": "origin_city",
+            "in": "query",
+            "required": false,
+            "description": "Texto a buscar en la ciudad de origen.",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120,
+              "example": "Bogota"
+            }
+          },
+          {
+            "name": "destination_city",
+            "in": "query",
+            "required": false,
+            "description": "Texto a buscar en la ciudad de destino.",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120,
+              "example": "Cali"
+            }
+          },
+          {
+            "name": "vehicle_type",
+            "in": "query",
+            "required": false,
+            "description": "Texto a buscar en el tipo de vehiculo.",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80,
+              "example": "CAMION"
+            }
+          },
+          {
+            "name": "vehicule_type",
+            "in": "query",
+            "required": false,
+            "deprecated": true,
+            "description": "Alias tolerado para vehicle_type.",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80,
+              "example": "CAMION"
+            }
+          },
+          {
+            "name": "carrier",
+            "in": "query",
+            "required": false,
+            "description": "Texto a buscar en el transportador.",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120,
+              "example": "TCC"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "description": "Estado exacto de la ruta.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVA",
+                "INACTIVA",
+                "EN_MANTENIMIENTO",
+                "SUSPENDIDA"
+              ],
+              "example": "ACTIVA"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Listado paginado de rutas filtradas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedRoutesResponse"
+                },
+                "examples": {
+                  "filteredRoutes": {
+                    "summary": "Rutas filtradas",
+                    "value": {
+                      "data": [
+                        {
+                          "id": "1",
+                          "originCity": "Bogota",
+                          "destinationCity": "Cali",
+                          "distanceKm": 460,
+                          "estimatedTimeHours": 9.5,
+                          "vehicleType": "CAMION",
+                          "carrier": "TCC",
+                          "costUsd": 520,
+                          "status": "ACTIVA",
+                          "createdAt": "2024-04-29T10:00:00.000Z"
+                        }
+                      ],
+                      "pagination": {
+                        "page": 1,
+                        "perPage": 20,
+                        "total": 1,
+                        "totalPages": 1
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Filtros invalidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "invalidFilters": {
+                    "summary": "Filtros invalidos",
+                    "value": {
+                      "message": "Filtros de ruta invalidos"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "La pagina solicitada esta fuera del rango disponible para los filtros aplicados.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoutePageNotFoundResponse"
+                },
+                "examples": {
+                  "pageOutOfRange": {
+                    "summary": "Pagina mayor al total de paginas",
+                    "value": {
+                      "message": "Pagina no encontrada",
+                      "pagination": {
+                        "page": 20,
+                        "perPage": 20,
+                        "total": 100,
+                        "totalPages": 5
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error inesperado del servidor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "internalError": {
+                    "summary": "Error inesperado",
+                    "value": {
+                      "message": "Error interno del servidor"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/routes/{id}": {
         "put": {
           "tags": [

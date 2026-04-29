@@ -3,6 +3,7 @@ import { describe, expect, it, jest } from '@jest/globals';
 
 import { CreateRouteUseCase } from '../../../../src/application/use-cases/create-route.use-case.js';
 import { DeleteRouteUseCase } from '../../../../src/application/use-cases/delete-route.use-case.js';
+import { FilterRoutesUseCase } from '../../../../src/application/use-cases/filter-routes.use-case.js';
 import { ListRoutesUseCase } from '../../../../src/application/use-cases/list-routes.use-case.js';
 import { UpdateRouteUseCase } from '../../../../src/application/use-cases/update-route.use-case.js';
 import type { RouteRepository } from '../../../../src/domain/ports/route-repository.js';
@@ -26,6 +27,15 @@ const createRepository = (overrides: Partial<RouteRepository>): RouteRepository 
     pagination: {
       page: 1,
       perPage: 20,
+      total: 0,
+      totalPages: 0
+    }
+  }),
+  findByFilters: async (params) => ({
+    data: [],
+    pagination: {
+      page: params.page,
+      perPage: params.perPage,
       total: 0,
       totalPages: 0
     }
@@ -61,7 +71,8 @@ const createController = (repositoryOverrides: Partial<RouteRepository>) => {
     new ListRoutesUseCase(repository),
     new CreateRouteUseCase(repository),
     new UpdateRouteUseCase(repository),
-    new DeleteRouteUseCase(repository)
+    new DeleteRouteUseCase(repository),
+    new FilterRoutesUseCase(repository)
   );
 };
 
@@ -634,5 +645,120 @@ describe('RoutesController', () => {
     const response = createResponseMock();
 
     await expect(controller.delete(request, response)).rejects.toThrow(error);
+  });
+
+  it('returns filtered paginated routes', async () => {
+    const repository: Partial<RouteRepository> = {
+      findByFilters: async (params) => ({
+        data: [
+          {
+            id: '1',
+            originCity: params.originCity ?? 'Bogota',
+            destinationCity: 'Cali',
+            distanceKm: 460,
+            estimatedTimeHours: 9.5,
+            vehicleType: params.vehicleType ?? 'TRACTOMULA',
+            carrier: params.carrier ?? 'TCC',
+            costUsd: 520,
+            status: params.status ?? 'ACTIVA',
+            createdAt: '2024-04-29T10:00:00.000Z'
+          }
+        ],
+        pagination: {
+          page: params.page,
+          perPage: params.perPage,
+          total: 1,
+          totalPages: 1
+        }
+      })
+    };
+    const controller = createController(repository);
+    const request = {
+      query: {
+        page: '1',
+        origin_city: 'Bogota',
+        vehicle_type: 'TRACTOMULA',
+        status: 'ACTIVA',
+        carrier: 'TCC'
+      }
+    } as unknown as Request;
+    const response = createResponseMock();
+
+    await controller.filter(request, response);
+
+    expect(response.status).not.toHaveBeenCalled();
+    expect(response.json).toHaveBeenCalledWith({
+      data: [
+        {
+          id: '1',
+          originCity: 'Bogota',
+          destinationCity: 'Cali',
+          distanceKm: 460,
+          estimatedTimeHours: 9.5,
+          vehicleType: 'TRACTOMULA',
+          carrier: 'TCC',
+          costUsd: 520,
+          status: 'ACTIVA',
+          createdAt: '2024-04-29T10:00:00.000Z'
+        }
+      ],
+      pagination: {
+        page: 1,
+        perPage: 20,
+        total: 1,
+        totalPages: 1
+      }
+    });
+  });
+
+  it('returns 400 when route filters are invalid', async () => {
+    const repository: Partial<RouteRepository> = {
+      findByFilters: async () => {
+        throw new Error('Repository should not be called');
+      }
+    };
+    const controller = createController(repository);
+    const request = { query: { status: 'BORRADOR' } } as unknown as Request;
+    const response = createResponseMock();
+
+    await controller.filter(request, response);
+
+    expect(response.status).toHaveBeenCalledWith(400);
+    expect(response.json).toHaveBeenCalledWith({ message: 'Filtros de ruta invalidos' });
+  });
+
+  it('returns 404 when filtered page is out of range', async () => {
+    const repository: Partial<RouteRepository> = {
+      findByFilters: async (params) => ({
+        data: [],
+        pagination: {
+          page: params.page,
+          perPage: params.perPage,
+          total: 100,
+          totalPages: 5
+        }
+      })
+    };
+    const controller = createController(repository);
+    const request = {
+      query: {
+        page: '20',
+        origin_city: 'Bogota'
+      }
+    } as unknown as Request;
+    const response = createResponseMock();
+
+    await controller.filter(request, response);
+
+    expect(response.status).toHaveBeenCalledWith(404);
+    expect(response.json).toHaveBeenCalledWith({
+      message: 'Pagina no encontrada',
+      pagination: {
+        page: 20,
+        perPage: 20,
+        total: 100,
+        totalPages: 5
+      }
+    });
   });
 });

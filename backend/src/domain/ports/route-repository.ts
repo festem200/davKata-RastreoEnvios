@@ -20,6 +20,14 @@ export interface RoutePaginationParams {
   perPage: number;
 }
 
+export interface RouteFilterParams extends RoutePaginationParams {
+  originCity?: string;
+  destinationCity?: string;
+  vehicleType?: string;
+  carrier?: string;
+  status?: string;
+}
+
 export interface PaginatedRoutes {
   data: Route[];
   pagination: {
@@ -32,6 +40,7 @@ export interface PaginatedRoutes {
 
 export interface RouteRepository {
   findAll(params: RoutePaginationParams): Promise<PaginatedRoutes>;
+  findByFilters(params: RouteFilterParams): Promise<PaginatedRoutes>;
   create(params: CreateRouteParams): Promise<Route>;
   update(params: UpdateRouteParams): Promise<Route | null>;
   deactivate(id: string): Promise<Route | null>;
