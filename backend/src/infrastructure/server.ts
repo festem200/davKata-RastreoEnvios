@@ -1,5 +1,6 @@
 import cors from 'cors';
 import express from 'express';
+import helmet from 'helmet';
 
 import { env } from './config/env.js';
 import { correlationIdMiddleware } from './middlewares/correlation-id.middleware.js';
@@ -13,6 +14,7 @@ export const createServer = () => {
 
   app.use(correlationIdMiddleware);
   app.use(httpLoggerMiddleware);
+  app.use(helmet());
   app.use(cors({ origin: env.corsOrigin }));
   app.use(express.json());
 

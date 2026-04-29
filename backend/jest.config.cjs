@@ -14,6 +14,7 @@ module.exports = {
     '^(\\.{1,2}/.*)\\.js$': '$1'
   },
   preset: 'ts-jest/presets/default-esm',
+  setupFiles: ['<rootDir>/test/setup/unit-env.ts'],
   testEnvironment: 'node',
   testMatch: ['<rootDir>/test/**/*.test.ts'],
   transform: {

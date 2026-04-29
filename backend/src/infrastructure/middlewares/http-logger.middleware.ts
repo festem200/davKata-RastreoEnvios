@@ -1,10 +1,16 @@
 import type { Request, Response } from 'express';
 import { pinoHttp } from 'pino-http';
 import { v4 as uuidv4 } from 'uuid';
+import { z } from 'zod';
 
 import { logger } from '../helpers/logger/logger.js';
 
 type HttpLogObject = Record<string, unknown>;
+const correlationIdHeaderSchema = z
+  .string()
+  .trim()
+  .max(128)
+  .regex(/^[A-Za-z0-9._-]+$/);
 
 const toHttpLogObject = (value: unknown): HttpLogObject => {
   if (typeof value === 'object' && value !== null) {
@@ -19,7 +25,12 @@ const resolveCorrelationId = (request: Request): string => {
     return request.correlationId;
   }
 
-  const headerCorrelationId = request.get('x-correlation-id')?.trim();
+  const parsedHeaderCorrelationId = correlationIdHeaderSchema.safeParse(
+    request.get('x-correlation-id')
+  );
+  const headerCorrelationId = parsedHeaderCorrelationId.success
+    ? parsedHeaderCorrelationId.data
+    : null;
   const correlationId = headerCorrelationId || uuidv4();
 
   request.correlationId = correlationId;

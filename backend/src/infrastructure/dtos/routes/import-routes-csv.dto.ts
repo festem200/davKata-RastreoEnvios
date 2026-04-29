@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import { ROUTE_STATUSES } from '../../../domain/constants/route-status.js';
 import type { ImportRouteParams } from '../../../domain/ports/route-repository.js';
+import { positiveDecimal, sanitizeText, sanitizedText } from '../../helpers/validation/sanitizers.js';
 import { ROUTE_NUMERIC_LIMITS } from './create-route-request.dto.js';
 
 type CsvRecord = Record<string, unknown>;
@@ -26,21 +27,16 @@ export class InvalidRoutesCsvError extends Error {
 }
 
 const routeCsvRowSchema = z.object({
-  originCity: z.string().trim().min(1).max(120),
-  destinationCity: z.string().trim().min(1).max(120),
-  distanceKm: z.coerce.number().finite().positive().max(ROUTE_NUMERIC_LIMITS.distanceKm),
-  estimatedTimeHours: z.coerce
-    .number()
-    .finite()
-    .positive()
-    .max(ROUTE_NUMERIC_LIMITS.estimatedTimeHours),
-  vehicleType: z.string().trim().min(1).max(80),
-  carrier: z.string().trim().min(1).max(120),
-  costUsd: z.coerce.number().finite().positive().max(ROUTE_NUMERIC_LIMITS.costUsd),
+  originCity: sanitizedText(120),
+  destinationCity: sanitizedText(120),
+  distanceKm: positiveDecimal(ROUTE_NUMERIC_LIMITS.distanceKm),
+  estimatedTimeHours: positiveDecimal(ROUTE_NUMERIC_LIMITS.estimatedTimeHours),
+  vehicleType: sanitizedText(80),
+  carrier: sanitizedText(120),
+  costUsd: positiveDecimal(ROUTE_NUMERIC_LIMITS.costUsd),
   status: z
     .string()
-    .trim()
-    .transform((status) => status.toUpperCase())
+    .transform((status) => sanitizeText(status).toUpperCase())
     .pipe(z.enum(ROUTE_STATUSES)),
   createdAt: z.coerce.date().optional()
 });

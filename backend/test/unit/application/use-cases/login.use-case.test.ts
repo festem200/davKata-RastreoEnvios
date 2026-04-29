@@ -34,7 +34,7 @@ const createUseCase = ({
   };
 
   return {
-    useCase: new LoginUseCase(userRepository, passwordHasher, accessTokenService),
+    useCase: new LoginUseCase(userRepository, passwordHasher, accessTokenService, '8h'),
     userRepository,
     passwordHasher,
     accessTokenService
@@ -100,4 +100,3 @@ describe('LoginUseCase', () => {
     ).rejects.toBeInstanceOf(InvalidCredentialsError);
   });
 });
-

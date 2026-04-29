@@ -353,6 +353,46 @@ describe('RoutesController', () => {
     });
   });
 
+  it('sanitizes route text fields and normalizes status before creating', async () => {
+    const repository: Partial<RouteRepository> = {
+      create: async (params) => ({
+        id: '1',
+        ...params,
+        createdAt: '2024-04-29T10:00:00.000Z'
+      })
+    };
+    const controller = createController(repository);
+    const request = {
+      body: {
+        originCity: '  Bogota\nNorte  ',
+        destinationCity: '  Medellin\tCentro ',
+        distanceKm: '415',
+        estimatedTimeHours: '8.5',
+        vehicleType: '  CAMION  ',
+        carrier: '  TCC  ',
+        costUsd: '320',
+        status: ' activa '
+      }
+    } as unknown as Request;
+    const response = createResponseMock();
+
+    await controller.create(request, response);
+
+    expect(response.status).toHaveBeenCalledWith(201);
+    expect(response.json).toHaveBeenCalledWith({
+      id: '1',
+      originCity: 'Bogota Norte',
+      destinationCity: 'Medellin Centro',
+      distanceKm: 415,
+      estimatedTimeHours: 8.5,
+      vehicleType: 'CAMION',
+      carrier: 'TCC',
+      costUsd: 320,
+      status: 'ACTIVA',
+      createdAt: '2024-04-29T10:00:00.000Z'
+    });
+  });
+
   it('returns 400 when route body is invalid', async () => {
     const repository: Partial<RouteRepository> = {
       findAll: async () => ({
@@ -374,6 +414,33 @@ describe('RoutesController', () => {
         originCity: '',
         destinationCity: 'Medellin',
         distanceKm: 0
+      }
+    } as unknown as Request;
+    const response = createResponseMock();
+
+    await controller.create(request, response);
+
+    expect(response.status).toHaveBeenCalledWith(400);
+    expect(response.json).toHaveBeenCalledWith({ message: 'Datos de ruta invalidos' });
+  });
+
+  it('returns 400 when route text includes HTML markup', async () => {
+    const repository: Partial<RouteRepository> = {
+      create: async () => {
+        throw new Error('Repository should not be called');
+      }
+    };
+    const controller = createController(repository);
+    const request = {
+      body: {
+        originCity: '<script>alert(1)</script>',
+        destinationCity: 'Medellin',
+        distanceKm: 415,
+        estimatedTimeHours: 8.5,
+        vehicleType: 'CAMION',
+        carrier: 'TCC',
+        costUsd: 320,
+        status: 'ACTIVA'
       }
     } as unknown as Request;
     const response = createResponseMock();

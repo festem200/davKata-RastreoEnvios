@@ -1,8 +1,7 @@
 import { z } from 'zod';
 
 import { ACTIVE_ROUTE_STATUS, ROUTE_STATUSES } from '../../../domain/constants/route-status.js';
-
-const nonEmptyText = (maxLength: number) => z.string().trim().min(1).max(maxLength);
+import { positiveDecimal, sanitizeText, sanitizedText } from '../../helpers/validation/sanitizers.js';
 
 export const ROUTE_NUMERIC_LIMITS = {
   distanceKm: 99_999_999.99,
@@ -11,18 +10,18 @@ export const ROUTE_NUMERIC_LIMITS = {
 } as const;
 
 export const createRouteRequestDtoSchema = z.object({
-  originCity: nonEmptyText(120),
-  destinationCity: nonEmptyText(120),
-  distanceKm: z.coerce.number().finite().positive().max(ROUTE_NUMERIC_LIMITS.distanceKm),
-  estimatedTimeHours: z.coerce
-    .number()
-    .finite()
-    .positive()
-    .max(ROUTE_NUMERIC_LIMITS.estimatedTimeHours),
-  vehicleType: nonEmptyText(80),
-  carrier: nonEmptyText(120),
-  costUsd: z.coerce.number().finite().positive().max(ROUTE_NUMERIC_LIMITS.costUsd),
-  status: z.enum(ROUTE_STATUSES).default(ACTIVE_ROUTE_STATUS)
+  originCity: sanitizedText(120),
+  destinationCity: sanitizedText(120),
+  distanceKm: positiveDecimal(ROUTE_NUMERIC_LIMITS.distanceKm),
+  estimatedTimeHours: positiveDecimal(ROUTE_NUMERIC_LIMITS.estimatedTimeHours),
+  vehicleType: sanitizedText(80),
+  carrier: sanitizedText(120),
+  costUsd: positiveDecimal(ROUTE_NUMERIC_LIMITS.costUsd),
+  status: z
+    .string()
+    .transform((status) => sanitizeText(status).toUpperCase())
+    .pipe(z.enum(ROUTE_STATUSES))
+    .default(ACTIVE_ROUTE_STATUS)
 });
 
 export type CreateRouteRequestDto = z.infer<typeof createRouteRequestDtoSchema>;

@@ -1,12 +1,13 @@
 import pino from 'pino';
 
+import { env } from '../../config/env.js';
+
 export const logger = pino({
   base: undefined,
   formatters: {
     level: (label) => ({ level: label })
   },
-  level: process.env.LOG_LEVEL ?? (process.env.NODE_ENV === 'test' ? 'silent' : 'info'),
+  level: env.logLevel,
   messageKey: 'message',
   timestamp: pino.stdTimeFunctions.isoTime
 });
-

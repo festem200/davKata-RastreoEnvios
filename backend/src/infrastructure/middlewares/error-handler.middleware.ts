@@ -1,4 +1,5 @@
 import type { ErrorRequestHandler } from 'express';
+import multer from 'multer';
 
 import { logger } from '../helpers/logger/logger.js';
 
@@ -14,9 +15,23 @@ const isMalformedJsonError = (error: unknown): error is HttpParseError =>
   (error as HttpParseError).status === 400 &&
   (error as HttpParseError).type === 'entity.parse.failed';
 
+const isMulterError = (error: unknown): error is multer.MulterError =>
+  error instanceof multer.MulterError;
+
+const resolveErrorResponse = (error: unknown) => {
+  if (isMalformedJsonError(error)) {
+    return { code: 400, message: 'JSON invalido' };
+  }
+
+  if (isMulterError(error)) {
+    return { code: 400, message: 'Archivo CSV invalido' };
+  }
+
+  return { code: 500, message: 'Error interno del servidor' };
+};
+
 export const errorHandlerMiddleware: ErrorRequestHandler = (error, request, response, _next) => {
-  const code = isMalformedJsonError(error) ? 400 : 500;
-  const message = code === 400 ? 'JSON invalido' : 'Error interno del servidor';
+  const { code, message } = resolveErrorResponse(error);
   const requestLogger = request.log ?? logger;
   const correlationId = request.correlationId;
 
@@ -32,10 +47,5 @@ export const errorHandlerMiddleware: ErrorRequestHandler = (error, request, resp
     message
   );
 
-  if (isMalformedJsonError(error)) {
-    response.status(400).json({ message: 'JSON invalido' });
-    return;
-  }
-
-  response.status(500).json({ message: 'Error interno del servidor' });
+  response.status(code).json({ message });
 };

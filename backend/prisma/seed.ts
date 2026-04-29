@@ -10,11 +10,32 @@ import { prisma } from '../src/infrastructure/database/prisma.js';
 
 const seedDirectory = dirname(fileURLToPath(import.meta.url));
 const routesCsvPath = join(seedDirectory, 'seed-data', 'routes_dataset.csv');
-const ADMIN_EMAIL = 'admin@test.com';
-const ADMIN_PASSWORD = '123456';
-const BCRYPT_COST_FACTOR = 12;
-const OPERATOR_EMAIL = 'operador@test.com';
-const OPERATOR_PASSWORD = '123456';
+
+const seedEnvSchema = z.object({
+  SEED_ADMIN_EMAIL: z.string().trim().toLowerCase().email(),
+  SEED_ADMIN_PASSWORD: z.string().min(1),
+  SEED_BCRYPT_COST_FACTOR: z.coerce.number().int().min(10).max(15),
+  SEED_OPERATOR_EMAIL: z.string().trim().toLowerCase().email(),
+  SEED_OPERATOR_PASSWORD: z.string().min(1)
+});
+
+const parsedSeedEnv = seedEnvSchema.safeParse(process.env);
+
+if (!parsedSeedEnv.success) {
+  const message = parsedSeedEnv.error.issues
+    .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
+    .join('; ');
+
+  throw new Error(`Invalid seed environment configuration: ${message}`);
+}
+
+const {
+  SEED_ADMIN_EMAIL,
+  SEED_ADMIN_PASSWORD,
+  SEED_BCRYPT_COST_FACTOR,
+  SEED_OPERATOR_EMAIL,
+  SEED_OPERATOR_PASSWORD
+} = parsedSeedEnv.data;
 
 const routeSeedSchema = z.object({
   originCity: z.string().trim().min(1),
@@ -92,12 +113,12 @@ const seedRoutesFromCsv = async () => {
 };
 
 const seedAdminUser = async () => {
-  const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, BCRYPT_COST_FACTOR);
+  const passwordHash = await bcrypt.hash(SEED_ADMIN_PASSWORD, SEED_BCRYPT_COST_FACTOR);
 
   await prisma.user.upsert({
-    where: { email: ADMIN_EMAIL },
+    where: { email: SEED_ADMIN_EMAIL },
     create: {
-      email: ADMIN_EMAIL,
+      email: SEED_ADMIN_EMAIL,
       passwordHash,
       role: 'ADMIN'
     },
@@ -109,16 +130,18 @@ const seedAdminUser = async () => {
     }
   });
 
-  console.log(`Seeded admin user ${ADMIN_EMAIL} with bcrypt cost factor ${BCRYPT_COST_FACTOR}`);
+  console.log(
+    `Seeded admin user ${SEED_ADMIN_EMAIL} with bcrypt cost factor ${SEED_BCRYPT_COST_FACTOR}`
+  );
 };
 
 const seedOperatorUser = async () => {
-  const passwordHash = await bcrypt.hash(OPERATOR_PASSWORD, BCRYPT_COST_FACTOR);
+  const passwordHash = await bcrypt.hash(SEED_OPERATOR_PASSWORD, SEED_BCRYPT_COST_FACTOR);
 
   await prisma.user.upsert({
-    where: { email: OPERATOR_EMAIL },
+    where: { email: SEED_OPERATOR_EMAIL },
     create: {
-      email: OPERATOR_EMAIL,
+      email: SEED_OPERATOR_EMAIL,
       passwordHash,
       role: 'OPERADOR'
     },
@@ -130,7 +153,9 @@ const seedOperatorUser = async () => {
     }
   });
 
-  console.log(`Seeded operator user ${OPERATOR_EMAIL} with bcrypt cost factor ${BCRYPT_COST_FACTOR}`);
+  console.log(
+    `Seeded operator user ${SEED_OPERATOR_EMAIL} with bcrypt cost factor ${SEED_BCRYPT_COST_FACTOR}`
+  );
 };
 
 try {
