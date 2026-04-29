@@ -70,4 +70,29 @@ describe('createServer', () => {
     expect(response.headers.get('access-control-allow-origin')).toBe('http://localhost:4200');
     expect(response.headers.get('access-control-allow-origin')).not.toBe('*');
   });
+
+  it('rate limits login after 5 attempts per minute by IP', async () => {
+    const baseUrl = await listen();
+    const loginRequest = () =>
+      fetch(`${baseUrl}/api/auth/login`, {
+        body: JSON.stringify({}),
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        method: 'POST'
+      });
+
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const response = await loginRequest();
+
+      expect(response.status).toBe(400);
+    }
+
+    const limitedResponse = await loginRequest();
+
+    expect(limitedResponse.status).toBe(429);
+    await expect(limitedResponse.json()).resolves.toEqual({
+      message: 'Demasiados intentos de login. Intenta nuevamente en un minuto'
+    });
+  });
 });
