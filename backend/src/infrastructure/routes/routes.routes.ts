@@ -9,6 +9,7 @@ import { ListRoutesUseCase } from '../../application/use-cases/list-routes.use-c
 import { TrackRouteUseCase } from '../../application/use-cases/track-route.use-case.js';
 import { UpdateRouteUseCase } from '../../application/use-cases/update-route.use-case.js';
 import { env } from '../config/env.js';
+import { CachedTrackingAdapter } from '../adapters/cached-tracking.adapter.js';
 import { SoapTrackingAdapter } from '../adapters/soap-tracking.adapter.js';
 import { RoutesController } from '../controllers/routes.controller.js';
 import { PrismaRouteRepository } from '../repositories/prisma-route.repository.js';
@@ -17,7 +18,7 @@ export const createRoutesRouter = (): Router => {
   const router = Router();
   const upload = multer({ storage: multer.memoryStorage() });
   const routeRepository = new PrismaRouteRepository();
-  const trackingAdapter = new SoapTrackingAdapter(env.trackingSoapUrl);
+  const trackingAdapter = new CachedTrackingAdapter(new SoapTrackingAdapter(env.trackingSoapUrl));
   const listRoutesUseCase = new ListRoutesUseCase(routeRepository);
   const createRouteUseCase = new CreateRouteUseCase(routeRepository);
   const updateRouteUseCase = new UpdateRouteUseCase(routeRepository);
