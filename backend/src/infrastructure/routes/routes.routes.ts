@@ -19,7 +19,30 @@ import { PrismaRouteRepository } from '../repositories/prisma-route.repository.j
 
 export const createRoutesRouter = (): Router => {
   const router = Router();
-  const upload = multer({ storage: multer.memoryStorage() });
+  const upload = multer({
+    fileFilter: (_request, file, callback) => {
+      const originalName = file.originalname.toLowerCase();
+      const isCsv =
+        file.mimetype === 'text/csv' ||
+        file.mimetype === 'application/csv' ||
+        file.mimetype === 'application/vnd.ms-excel' ||
+        originalName.endsWith('.csv');
+
+      if (!isCsv) {
+        callback(new multer.MulterError('LIMIT_UNEXPECTED_FILE', 'file'));
+        return;
+      }
+
+      callback(null, true);
+    },
+    limits: {
+      fileSize: 2 * 1024 * 1024,
+      files: 1,
+      fields: 0,
+      parts: 1
+    },
+    storage: multer.memoryStorage()
+  });
   const routeRepository = new PrismaRouteRepository();
   const trackingAdapter = new CachedTrackingAdapter(new SoapTrackingAdapter(env.trackingSoapUrl));
   const listRoutesUseCase = new ListRoutesUseCase(routeRepository);

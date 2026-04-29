@@ -1,45 +1,33 @@
 import type { NextFunction, Request, RequestHandler, Response } from 'express';
 import jwt from 'jsonwebtoken';
+import { z } from 'zod';
 
-import { USER_ROLES, type UserRole } from '../../domain/constants/user-role.js';
+import { USER_ROLES } from '../../domain/constants/user-role.js';
 import { env } from '../config/env.js';
 import type { AuthUser } from '../helpers/types-global/auth-user.js';
 
-interface AuthenticatedJwtPayload {
-  sub: string;
-  email: string;
-  role: UserRole;
-}
+const bearerTokenSchema = z
+  .string()
+  .trim()
+  .regex(/^Bearer\s+[A-Za-z0-9._-]+$/i)
+  .transform((authorizationHeader) => authorizationHeader.replace(/^Bearer\s+/i, ''));
 
-const isUserRole = (role: unknown): role is UserRole =>
-  typeof role === 'string' && USER_ROLES.includes(role as UserRole);
+const authenticatedJwtPayloadSchema = z.object({
+  sub: z.string().regex(/^\d+$/),
+  email: z.string().email().max(254),
+  role: z.enum(USER_ROLES)
+});
 
-const isAuthenticatedPayload = (payload: unknown): payload is AuthenticatedJwtPayload => {
-  if (typeof payload !== 'object' || payload === null) {
-    return false;
-  }
-
-  const candidate = payload as Record<string, unknown>;
-
-  return (
-    typeof candidate.sub === 'string' &&
-    typeof candidate.email === 'string' &&
-    isUserRole(candidate.role)
-  );
-};
+type AuthenticatedJwtPayload = z.infer<typeof authenticatedJwtPayloadSchema>;
 
 const getBearerToken = (authorizationHeader: string | undefined): string | null => {
-  if (!authorizationHeader) {
+  const parsedHeader = bearerTokenSchema.safeParse(authorizationHeader);
+
+  if (!parsedHeader.success) {
     return null;
   }
 
-  const [scheme, token] = authorizationHeader.split(' ');
-
-  if (scheme?.toLowerCase() !== 'bearer' || !token) {
-    return null;
-  }
-
-  return token;
+  return parsedHeader.data;
 };
 
 export const authMiddleware: RequestHandler = (
@@ -56,16 +44,18 @@ export const authMiddleware: RequestHandler = (
 
   try {
     const payload = jwt.verify(token, env.jwtSecret);
+    const parsedPayload = authenticatedJwtPayloadSchema.safeParse(payload);
 
-    if (!isAuthenticatedPayload(payload)) {
+    if (!parsedPayload.success) {
       response.status(401).json({ message: 'Token de autenticacion invalido' });
       return;
     }
 
+    const authPayload: AuthenticatedJwtPayload = parsedPayload.data;
     const authUser: AuthUser = {
-      id: payload.sub,
-      email: payload.email,
-      role: payload.role
+      id: authPayload.sub,
+      email: authPayload.email,
+      role: authPayload.role
     };
 
     request.user = authUser;

@@ -1,17 +1,28 @@
 import 'dotenv/config';
+import { z } from 'zod';
 
-if (!process.env.DATABASE_URL) {
-  throw new Error('DATABASE_URL is required');
-}
+const envSchema = z.object({
+  PORT: z.coerce.number().int().positive().max(65_535).default(3000),
+  CORS_ORIGIN: z.string().url().default('http://localhost:4200'),
+  DATABASE_URL: z.string().min(1),
+  JWT_SECRET: z.string().min(16),
+  TRACKING_SOAP_URL: z.string().url().default('http://localhost:8088/mockTrackingBinding')
+});
 
-if (!process.env.JWT_SECRET) {
-  throw new Error('JWT_SECRET is required');
+const parsedEnv = envSchema.safeParse(process.env);
+
+if (!parsedEnv.success) {
+  const message = parsedEnv.error.issues
+    .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
+    .join('; ');
+
+  throw new Error(`Invalid environment configuration: ${message}`);
 }
 
 export const env = {
-  port: Number(process.env.PORT ?? 3000),
-  corsOrigin: process.env.CORS_ORIGIN ?? 'http://localhost:4200',
-  databaseUrl: process.env.DATABASE_URL,
-  jwtSecret: process.env.JWT_SECRET,
-  trackingSoapUrl: process.env.TRACKING_SOAP_URL ?? 'http://localhost:8088/mockTrackingBinding'
+  port: parsedEnv.data.PORT,
+  corsOrigin: parsedEnv.data.CORS_ORIGIN,
+  databaseUrl: parsedEnv.data.DATABASE_URL,
+  jwtSecret: parsedEnv.data.JWT_SECRET,
+  trackingSoapUrl: parsedEnv.data.TRACKING_SOAP_URL
 };

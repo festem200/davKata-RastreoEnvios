@@ -1,4 +1,5 @@
 import type { NextFunction, Request, Response } from 'express';
+import multer from 'multer';
 import { describe, expect, it, jest } from '@jest/globals';
 
 import { errorHandlerMiddleware } from '../../../../src/infrastructure/middlewares/error-handler.middleware.js';
@@ -72,6 +73,30 @@ describe('errorHandlerMiddleware', () => {
         method: 'GET'
       }),
       'Error interno del servidor'
+    );
+  });
+
+  it('maps CSV upload errors to 400', () => {
+    const request = createRequestMock();
+    const response = createResponseMock();
+
+    errorHandlerMiddleware(
+      new multer.MulterError('LIMIT_FILE_SIZE', 'file'),
+      request,
+      response,
+      jest.fn() as unknown as NextFunction
+    );
+
+    expect(response.status).toHaveBeenCalledWith(400);
+    expect(response.json).toHaveBeenCalledWith({ message: 'Archivo CSV invalido' });
+    expect(request.log.error).toHaveBeenCalledWith(
+      expect.objectContaining({
+        code: 400,
+        correlationId: 'test-correlation-id',
+        endpoint: '/api/routes',
+        method: 'GET'
+      }),
+      'Archivo CSV invalido'
     );
   });
 });

@@ -1,12 +1,15 @@
 import { z } from 'zod';
 
+import { sanitizeText } from '../../helpers/validation/sanitizers.js';
+
 export const MAX_ROUTE_ID = 9_223_372_036_854_775_807n;
 
 export const routeIdParamDtoSchema = z.object({
   id: z
     .string()
-    .regex(/^\d+$/)
-    .refine((id) => {
+    .transform(sanitizeText)
+    .pipe(z.string().regex(/^\d+$/))
+    .refine((id: string) => {
       if (!/^\d+$/.test(id)) {
         return false;
       }
